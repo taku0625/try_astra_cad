@@ -5,7 +5,7 @@
   "fixture_valid_solid": true,
   "stl_closed_manifold": true,
   "stl_connected_components": 1,
-  "stl_facets": 5084,
+  "stl_facets": 5096,
   "fixture_bounds_mm": {
     "x": [
       -55.0,
@@ -25,38 +25,56 @@
     "camera": 0.0,
     "lidar": 0.0
   },
+  "camera_orientation": {
+    "roll_about_forward_deg": 180.0,
+    "source_positive_z_global": [
+      0.0,
+      -1.2246467991473532e-16,
+      -1.0
+    ],
+    "seating_plane_z_source": 22.5,
+    "basis": "User-requested 180-degree roll correction; rear connector below optical axis"
+  },
+  "camera_connector_center_global_mm": [
+    5.600000000000001,
+    -5.4785017194915435e-15,
+    15.5
+  ],
+  "cable_opening_height_above_base_mm": 7.5,
+  "cable_base_relief_depth_mm": 0.5,
+  "cable_approach": "PASS - nominal dia 16 clearance from rear base edge through rear plate",
   "camera_assembly_approach": "PASS - exact sensor at 8 approach offsets along X; final rear contact and cable clearance",
   "camera_back_hole_centers_global": [
     [
       5.600000000000005,
-      12.500000000000004,
-      18.0
+      -12.500000000000002,
+      43.0
     ],
     [
       5.600000000000005,
-      12.500000000000004,
-      43.0
-    ],
-    [
-      5.599999999999998,
-      -12.499999999999996,
-      43.0
-    ],
-    [
-      5.599999999999998,
-      -12.499999999999996,
+      -12.500000000000005,
       18.0
+    ],
+    [
+      5.599999999999998,
+      12.499999999999995,
+      18.0
+    ],
+    [
+      5.599999999999998,
+      12.499999999999998,
+      43.0
     ]
   ],
-  "camera_foot_area_mm2": 518.0031467127758,
-  "camera_supported_area_mm2": 462.6366880809271,
-  "camera_support_fraction": 0.8931155940206122,
+  "camera_foot_area_mm2": 667.9645183811328,
+  "camera_supported_area_mm2": 612.5980597492842,
+  "camera_support_fraction": 0.9171116771800486,
   "lidar_screw_access": "PASS - all four screws accessible before camera insertion",
   "directions": {
     "camera_forward": [
       1.0,
-      -2.220446049250313e-16,
-      0.0
+      2.220446049250313e-16,
+      -2.465190328815662e-32
     ],
     "lidar_scan": [
       2.465190328815662e-32,
@@ -65,8 +83,8 @@
     ],
     "camera_cable": [
       -1.0,
-      2.220446049250313e-16,
-      0.0
+      -2.220446049250313e-16,
+      2.465190328815662e-32
     ],
     "lidar_cable": [
       -1.0,
@@ -83,8 +101,8 @@
     "entrance_pupil_verified": false,
     "result": "PASS for assumed forward hemisphere; verify actual image and full calibrated FOV"
   },
-  "fixture_volume_mm3": 84820.41263160252,
-  "pla_solid_mass_g_at_1_24": 105.17731166318713,
+  "fixture_volume_mm3": 84716.56069715804,
+  "pla_solid_mass_g_at_1_24": 105.04853526447597,
   "holes": [
     {
       "type": "HOST",
@@ -183,8 +201,8 @@
     "camera": "220a4cd902959a2154054680a6834b6826a77bc83f53de7b971f4fc7a09b23d2",
     "lidar": "b93e9b51282ed319b6aa755e76a132c0eb03306da5f3b9676bcabf2e2ae25f02"
   },
-  "parameters_sha256": "ba7221ec24732883186dbf8d1b42e0854d2d6dddfb2bc94ed958657396befeaf",
-  "model_script_sha256": "837ba9b764ba7e20aa4542c54ac1ef8e11e5cbe0634c261a9b6a03b605b06621",
+  "parameters_sha256": "3087307cf08b8444b628fe971b4bda0ade5818fd970470be513bf9ca0e8e2f80",
+  "model_script_sha256": "89a426f62cb3b54a41c4a579b0d5216d371009c4a369169ea0eaf81e08ebdae7",
   "STL_roundtrip": "PASS - reimported closed manifold, one connected component",
   "FCStd_reopen_parameter_edit": "PASS - reopen, change back plate thickness +1 mm, recompute, restore",
   "STEP_roundtrip": "PASS - valid single solid, volume preserved"

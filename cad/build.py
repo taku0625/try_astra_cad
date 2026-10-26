@@ -36,7 +36,7 @@ def render(p,r,meshes):
     cx=c['forward_offset'];t=b['thickness'];back=cx+c['rear_face_y_source']
     f=plt.figure(figsize=(15,10),facecolor='white')
     f.suptitle('FreeCAD | Rear screw bracket + camera support base',x=.05,ha='left',fontsize=21,weight='bold')
-    f.text(.05,.927,'CAMERA 8 mm REARWARD / 25 x 25 REAR HOLES / CABLE OPENING / ONE PLA PRINT',fontsize=11,color='#286678')
+    f.text(.05,.927,'CAMERA ROLL CORRECTED 180 DEG / REAR CONNECTOR LOW / ONE PLA PRINT',fontsize=11,color='#286678')
     ax=f.add_subplot(121,projection='3d')
     add_meshes(ax,meshes,['fixture','camera','lidar'])
     ax.set(xlim=(-65,65),ylim=(-60,60),zlim=(-70,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
@@ -54,7 +54,9 @@ def render(p,r,meshes):
     ax.add_patch(Rectangle((back-k['thickness'],t),k['thickness'],k['height_above_base'],color=COLORS['fixture'],alpha=.8))
     ax.add_patch(Rectangle((cx-16.4,t),38.1,45,facecolor=COLORS['camera'],edgecolor='#8c672c',alpha=.55))
     ax.add_patch(Rectangle((cx+22.8,t+10.5),6.7,24,facecolor=COLORS['camera']))
-    ax.add_patch(Rectangle((cx-28.3,t+33.75),11.9,7.5,facecolor=COLORS['camera']))
+    ax.add_patch(Rectangle((cx-28.3,r['camera_connector_center_global_mm'][2]-3.75),11.9,7.5,facecolor=COLORS['camera']))
+    ax.annotate('Rear connector LOW',xy=(cx-24,r['camera_connector_center_global_mm'][2]),
+                xytext=(-58,68),fontsize=8,color='#8c672c',arrowprops=dict(arrowstyle='->',color='#8c672c'))
     ax.axvline(plane,color='#38784c',ls='--',lw=1.3)
     ax.text(plane+3,66,'Forward rays',color='#38784c',fontsize=9)
     ax.annotate('',xy=(plane,-8),xytext=(front,-8),arrowprops=dict(arrowstyle='<->',color='#38784c'))
@@ -77,13 +79,15 @@ def render(p,r,meshes):
           f"Rear plate: {k['thickness']:g} thick x {k['width']:g} wide x {k['height_above_base']:g} above base; Z top={t+k['height_above_base']:g}.",
           f"Rear plate camera contact face X={back:g}; rear face X={back-k['thickness']:g}.",
           'Camera datum X=22 (8 mm rearward from previous X=30), Y=0; bottom Z=8.',
+          'Camera roll: 180 deg about forward +X; source +Z points DOWN; rear connector below lens.',
           'MID-360 datum XY=(0,0), mounting face Z=0, scan downward -Z. Both cables exit -X.','',
           'CAMERA REAR ATTACHMENT:',
           ' 4 x dia 3.6 THRU along X at Y=+/-12.5, Z=18 and 43 (25 x 25 pitch).',
           ' Source STEP rear face Y=-16.4: four entry loops diameter 2.57 at X/Z=+/-12.5.',
           ' M3 thread inferred; axial solid begins 7 mm inside source holes. Verify actual specification.',
           ' M3x10 through 6 mm rear plate gives 4 mm insertion WITHOUT washers (conditional).',
-          ' Cable opening centered Y=0, Z=45.5: full diameter 16 clearance + 45-degree teardrop roof.',
+          f" Cable opening Y=0, Z={r['camera_connector_center_global_mm'][2]:g}: dia 16 + 45-degree teardrop roof.",
+          f" Base relief below cable: {r['cable_base_relief_depth_mm']:g} deep, extends to rear edge for plug approach.",
           ' Two rear-only gussets: 5 mm wide, 16 mm deep, 26 mm high, with 1 mm root overlaps.','',
           'BASE HOLES:']
         for h in r['holes']:
@@ -97,7 +101,7 @@ def render(p,r,meshes):
           ' Temperature/speed follow filament and printer profiles. Deburr holes and contact faces.','',
           'ASSEMBLY:',
           '1. Attach inverted LiDAR to base with 4 screws. M3x8 implies 3.5 mm insertion: verify limit.',
-          '2. Rest camera on base, move rearward so connector enters cable opening and rear face seats.',
+          '2. With rear connector LOW, rest camera on base; slide rearward into cable opening.',
           '3. Fasten 4 rear camera screws from -X. Verify thread, insertion and tightening torque.',
           '4. Connect cables. Attach host via 4 M5 clearance holes; keep LiDAR/cable volumes clear.','',
           f"CAMERA SUPPORT: {r['camera_supported_area_mm2']:.1f} of {r['camera_foot_area_mm2']:.1f} mm2 bottom planes contact the base.",

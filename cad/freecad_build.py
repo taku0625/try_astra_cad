@@ -22,10 +22,13 @@ D = App.newDocument('SinglePrintedFixture')
 S = D.addObject('Spreadsheet::Sheet', 'Parameters')
 S.Label = 'Editable dimensions (mm)'
 B,C,L,R = P['plate'],P['camera'],P['lidar'],P['rear_bracket']
+camera_rotation=App.Rotation(V(1,0,0),C['roll_about_forward_deg']).multiply(App.Rotation(V(0,0,1),-90))
+camera_seat_z=camera_rotation.multVec(V(0,0,C['seating_plane_z_source'])).z
+cable_z=camera_rotation.multVec(V(0,0,C['rear_connector_z_source'])).z-camera_seat_z
 values = dict(BaseL=B['length_x'], BaseW=B['width_y'], BaseT=B['thickness'], BaseCX=B['center_x'], Radius=B['corner_radius'],
               CameraX=C['forward_offset'], CameraRear=C['rear_face_y_source'], BackT=R['thickness'], BackW=R['width'],
               BackH=R['height_above_base'], MountPitch=C['rear_mount_pitch'], CableD=R['cable_diameter'],
-              CableZ=R['cable_center_height_above_camera_bottom'], BraceW=R['brace_width'], BraceD=R['brace_depth'], BraceH=R['brace_height'])
+              CameraSeatZ=camera_seat_z, CableZ=cable_z, BraceW=R['brace_width'], BraceD=R['brace_depth'], BraceH=R['brace_height'])
 for i,(key,val) in enumerate(values.items(),1):
     S.set(f'A{i}',key);S.set(f'B{i}',f'={val} mm');S.setAlias(f'B{i}',key)
 S.setColumnWidth('A',180);S.setColumnWidth('B',100)
@@ -93,11 +96,14 @@ for i,(x,y) in enumerate([(x,y) for x in [-L['hole_pitch_x']/2,L['hole_pitch_x']
 for i,(sy,sz) in enumerate([(-1,-1),(-1,1),(1,-1),(1,1)]):
     tools.append(cyl(f'CameraRearHole{i}',R['camera_clearance_diameter']/2,'Parameters.BackT+2 mm',
                      'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',
-                     f'{sy}*Parameters.MountPitch/2',f"Parameters.BaseT-{C['bottom_z_source']} mm+{sz}*Parameters.MountPitch/2",
+                     f'{sy}*Parameters.MountPitch/2',f'Parameters.BaseT-Parameters.CameraSeatZ+{sz}*Parameters.MountPitch/2',
                      App.Rotation(V(0,0,1),V(1,0,0))))
 # Cable opening: full circular clearance plus a 45-degree teardrop roof for FDM.
-cable=cyl('CableCircularClearance','Parameters.CableD/2','Parameters.BackT+2 mm',
-          'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',0,'Parameters.BaseT+Parameters.CableZ',
+# Extend to the rear edge: the low connector requires a 0.5 mm shallow base relief
+# so a nominal dia 16 plug can approach the opening horizontally from behind.
+cable=cyl('CableCircularClearance','Parameters.CableD/2',
+          'Parameters.CameraX+Parameters.CameraRear-Parameters.BaseCX+Parameters.BaseL/2+2 mm',
+          'Parameters.BaseCX-Parameters.BaseL/2-1 mm',0,'Parameters.BaseT+Parameters.CableZ',
           App.Rotation(V(0,0,1),V(1,0,0)))
 diamond=primitive('Part::Prism','CableTeardropDiamond');diamond.Polygon=4
 expr(diamond,'Circumradius','Parameters.CableD/sqrt(2)');expr(diamond,'Height','Parameters.BackT+2 mm')
@@ -114,15 +120,16 @@ D.recompute()
 assert not fixture.Shape.isNull(), 'FreeCAD feature recompute failed'
 assert fixture.Shape.isValid() and len(fixture.Shape.Solids)==1, 'Fixture must be one valid solid'
 
-# User STEP geometry: camera retains forward +X; MID-360 points down, both ports -X.
+# User STEP geometry: camera rolled 180 degrees about +X, rear connector low.
+# MID-360 points down; both ports still face -X.
 refs={}
 for name,key in [('Camera','camera'),('MID360','lidar')]:
     o=D.addObject('Part::Feature',name);o.Label='REFERENCE '+name
     o.Shape=Part.read(str(ROOT/'cad'/P[key]['reference_file']))
     if key=='camera':
-        o.Placement=App.Placement(V(C['forward_offset'],0,B['thickness']-C['bottom_z_source']),App.Rotation(V(0,0,1),-90))
+        o.Placement=App.Placement(V(C['forward_offset'],0,B['thickness']-camera_seat_z),camera_rotation)
         o.setExpression('Placement.Base.x','Parameters.CameraX')
-        o.setExpression('Placement.Base.z',f"Parameters.BaseT-{C['bottom_z_source']} mm")
+        o.setExpression('Placement.Base.z','Parameters.BaseT-Parameters.CameraSeatZ')
     else:
         r=App.Rotation(V(0,0,1),180).multiply(App.Rotation(V(1,0,0),-90))
         o.Placement=App.Placement(V(0,0,L['bottom_y_source']),r)
@@ -143,8 +150,17 @@ camdir=refs['camera'].Placement.Rotation.multVec(V(0,1,0))
 liddir=refs['lidar'].Placement.Rotation.multVec(V(0,1,0))
 camport=refs['camera'].Placement.Rotation.multVec(V(0,-1,0))
 lidport=refs['lidar'].Placement.Rotation.multVec(V(1,0,0))
+cam_source_z=refs['camera'].Placement.Rotation.multVec(V(0,0,1))
 assert (camdir-V(1,0,0)).Length<1e-8 and (liddir-V(0,0,-1)).Length<1e-8
 assert (camport-V(-1,0,0)).Length<1e-8 and (lidport-V(-1,0,0)).Length<1e-8
+assert (cam_source_z-V(0,0,-1)).Length<1e-8, 'Camera roll must put source +Z downward'
+connector=refs['camera'].Placement.multVec(V(0,C['rear_face_y_source'],C['rear_connector_z_source']))
+assert abs(connector.y)<1e-8 and abs(connector.z-(B['thickness']+cable_z))<1e-8
+assert connector.z<refs['camera'].Placement.Base.z, 'Rear connector must be below optical axis'
+rear_start=B['center_x']-B['length_x']/2-1
+plug_probe=Part.makeCylinder(R['cable_diameter']/2-0.02,connector.x-rear_start+0.1,
+                             V(rear_start,connector.y,connector.z),V(1,0,0))
+assert shape.common(plug_probe).Volume<1e-5, 'Cable approach blocked by base or rear plate'
 # Inspect the supplied camera back-face loops, rather than guessing a thread pattern.
 source=Part.read(str(ROOT/'cad'/C['reference_file']))
 rear_holes=[]
@@ -206,6 +222,12 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
         'fixture_valid_solid':True,'stl_closed_manifold':True,'stl_connected_components':1,'stl_facets':mesh.CountFacets,
         'fixture_bounds_mm':dict(x=[shape.BoundBox.XMin,shape.BoundBox.XMax],y=[shape.BoundBox.YMin,shape.BoundBox.YMax],z=[shape.BoundBox.ZMin,shape.BoundBox.ZMax]),
         'camera_forward_shift_mm':C['forward_offset'],'interference_volume_mm3':interferences,
+        'camera_orientation':dict(roll_about_forward_deg=C['roll_about_forward_deg'],source_positive_z_global=list(cam_source_z),
+                                  seating_plane_z_source=C['seating_plane_z_source'],basis=C['orientation_basis']),
+        'camera_connector_center_global_mm':list(connector),
+        'cable_opening_height_above_base_mm':cable_z,
+        'cable_base_relief_depth_mm':max(0,R['cable_diameter']/2-cable_z),
+        'cable_approach':'PASS - nominal dia 16 clearance from rear base edge through rear plate',
         'camera_assembly_approach':'PASS - exact sensor at 8 approach offsets along X; final rear contact and cable clearance',
         'camera_back_hole_centers_global':rear_global,'camera_foot_area_mm2':full_foot_area,
         'camera_supported_area_mm2':supported_area,'camera_support_fraction':supported_area/full_foot_area,
