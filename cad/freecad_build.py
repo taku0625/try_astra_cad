@@ -21,11 +21,11 @@ V = App.Vector
 D = App.newDocument('SinglePrintedFixture')
 S = D.addObject('Spreadsheet::Sheet', 'Parameters')
 S.Label = 'Editable dimensions (mm)'
-B,C,L,K = P['plate'],P['camera'],P['lidar'],P['cage']
+B,C,L,R = P['plate'],P['camera'],P['lidar'],P['rear_bracket']
 values = dict(BaseL=B['length_x'], BaseW=B['width_y'], BaseT=B['thickness'], BaseCX=B['center_x'], Radius=B['corner_radius'],
-              CameraX=C['forward_offset'], InnerW=K['inside_width'], InnerH=K['inside_height'], Wall=K['wall_thickness'],
-              RoofT=K['roof_thickness'], CageL=K['length_x'], CageRear=K['rear_relative_x'], ScrewX=K['screw_relative_x'],
-              NutFlat=K['nut_across_flats'], NutDepth=K['nut_depth'])
+              CameraX=C['forward_offset'], CameraRear=C['rear_face_y_source'], BackT=R['thickness'], BackW=R['width'],
+              BackH=R['height_above_base'], MountPitch=C['rear_mount_pitch'], CableD=R['cable_diameter'],
+              CableZ=R['cable_center_height_above_camera_bottom'], BraceW=R['brace_width'], BraceD=R['brace_depth'], BraceH=R['brace_height'])
 for i,(key,val) in enumerate(values.items(),1):
     S.set(f'A{i}',key);S.set(f'B{i}',f'={val} mm');S.setAlias(f'B{i}',key)
 S.setColumnWidth('A',180);S.setColumnWidth('B',100)
@@ -70,13 +70,16 @@ for i,(sx,sy) in enumerate([(-1,-1),(-1,1),(1,-1),(1,1)]):
                          f'Parameters.BaseCX+{sx}*(Parameters.BaseL/2-Parameters.Radius)',
                          f'{sy}*(Parameters.BaseW/2-Parameters.Radius)',0))
 base=fuse('RoundedBase',basepieces)
-rails=[]
-for i,y in enumerate(['-Parameters.InnerW/2-Parameters.Wall','Parameters.InnerW/2']):
-    rails.append(box(f'CageSide{i}','Parameters.CageL','Parameters.Wall','Parameters.InnerH+Parameters.RoofT+1 mm',
-                     'Parameters.CameraX+Parameters.CageRear',y,'Parameters.BaseT-1 mm'))
-roof=box('IntegralRoof','Parameters.CageL','Parameters.InnerW+2*Parameters.Wall','Parameters.RoofT',
-         'Parameters.CameraX+Parameters.CageRear','-Parameters.InnerW/2-Parameters.Wall','Parameters.BaseT+Parameters.InnerH')
-stock=fuse('OnePieceStock',[base,*rails,roof])
+back=box('BackPlate','Parameters.BackT','Parameters.BackW','Parameters.BackH+1 mm',
+         'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT','-Parameters.BackW/2','Parameters.BaseT-1 mm')
+braces=[]
+for i,y in enumerate(['-Parameters.BackW/2','Parameters.BackW/2-Parameters.BraceW']):
+    w=primitive('Part::Wedge',f'RearBrace{i}')
+    for key,val in dict(Xmin=0,Xmax='Parameters.BraceW',Ymin=0,Ymax='Parameters.BraceD',Zmin=0,Zmax='Parameters.BraceH',
+                        X2min=0,X2max='Parameters.BraceW',Z2min=0,Z2max=0).items():expr(w,key,val)
+    place(w,'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT+1 mm',y,'Parameters.BaseT-1 mm',App.Rotation(V(0,0,1),90))
+    braces.append(w)
+stock=fuse('OnePieceStock',[base,back,*braces])
 tools=[];holes=[]
 for i,(x,y) in enumerate(B['host_holes_xy']):
     tools.append(cyl(f'HostHole{i}',B['host_hole_diameter']/2,'Parameters.BaseT+2 mm',x,y,-1))
@@ -86,18 +89,25 @@ for i,(x,y) in enumerate([(x,y) for x in [-L['hole_pitch_x']/2,L['hole_pitch_x']
     tools.append(cyl(f'LiDARCounterbore{i}',L['counterbore_diameter']/2,L['counterbore_depth']+1,
                      x,y,f"Parameters.BaseT-{L['counterbore_depth']} mm"))
     holes.append(dict(type='LIDAR',xy=[x,y],diameter=L['clearance_diameter'],counterbore=L['counterbore_diameter'],depth=L['counterbore_depth']))
-    # Vertical driver/head access through the integrated roof at the two forward mounting screws.
-    if x>0:
-        tools.append(cyl(f'RoofDriverAccess{i}',K['driver_hole_diameter']/2,'Parameters.RoofT+2 mm',x,y,'Parameters.BaseT+Parameters.InnerH-1 mm'))
-for i,z in enumerate(K['screw_z_above_floor']):
-    rot=App.Rotation(V(1,0,0),-90)
-    tools.append(cyl(f'ClampScrew{i}',K['screw_clearance_diameter']/2,'Parameters.Wall+2 mm',
-                     'Parameters.CameraX+Parameters.ScrewX','Parameters.InnerW/2-1 mm',f'Parameters.BaseT+{z} mm',rot))
-    h=primitive('Part::Prism',f'CaptiveNut{i}');h.Polygon=6
-    h.setExpression('Circumradius','Parameters.NutFlat/sqrt(3)');h.setExpression('Height','Parameters.NutDepth+0.1 mm')
-    place(h,'Parameters.CameraX+Parameters.ScrewX','Parameters.InnerW/2-0.1 mm',f'Parameters.BaseT+{z} mm',rot)
-    tools.append(h)
-cutters=fuse('MachiningAndNutPockets',tools)
+# Rear camera fasteners: holes extracted from the source back-face loops.
+for i,(sy,sz) in enumerate([(-1,-1),(-1,1),(1,-1),(1,1)]):
+    tools.append(cyl(f'CameraRearHole{i}',R['camera_clearance_diameter']/2,'Parameters.BackT+2 mm',
+                     'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',
+                     f'{sy}*Parameters.MountPitch/2',f"Parameters.BaseT-{C['bottom_z_source']} mm+{sz}*Parameters.MountPitch/2",
+                     App.Rotation(V(0,0,1),V(1,0,0))))
+# Cable opening: full circular clearance plus a 45-degree teardrop roof for FDM.
+cable=cyl('CableCircularClearance','Parameters.CableD/2','Parameters.BackT+2 mm',
+          'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',0,'Parameters.BaseT+Parameters.CableZ',
+          App.Rotation(V(0,0,1),V(1,0,0)))
+diamond=primitive('Part::Prism','CableTeardropDiamond');diamond.Polygon=4
+expr(diamond,'Circumradius','Parameters.CableD/sqrt(2)');expr(diamond,'Height','Parameters.BackT+2 mm')
+place(diamond,'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',0,'Parameters.BaseT+Parameters.CableZ',App.Rotation(V(1,1,1),120))
+clip=box('CableRoofClip','Parameters.BackT+2 mm','2*Parameters.CableD','Parameters.CableD',
+         'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm','-Parameters.CableD',
+         'Parameters.BaseT+Parameters.CableZ+Parameters.CableD/(2*sqrt(2))')
+roof=primitive('Part::Common','CableTeardropRoof');roof.Base=diamond;roof.Tool=clip;roof.Refine=True
+tools.extend([cable,roof])
+cutters=fuse('ClearanceOpenings',tools)
 fixture=primitive('Part::Cut','PrintableFixture');fixture.Base=stock;fixture.Tool=cutters;fixture.Refine=True
 fixture.Label='ONE PRINTED PART - PLA'
 D.recompute()
@@ -135,25 +145,53 @@ camport=refs['camera'].Placement.Rotation.multVec(V(0,-1,0))
 lidport=refs['lidar'].Placement.Rotation.multVec(V(1,0,0))
 assert (camdir-V(1,0,0)).Length<1e-8 and (liddir-V(0,0,-1)).Length<1e-8
 assert (camport-V(-1,0,0)).Length<1e-8 and (lidport-V(-1,0,0)).Length<1e-8
-# Conservative forward-hemisphere exclusion; the real entrance pupil is not provided in STEP.
+# Inspect the supplied camera back-face loops, rather than guessing a thread pattern.
+source=Part.read(str(ROOT/'cad'/C['reference_file']))
+rear_holes=[]
+for face in source.Faces:
+    bb=face.optimalBoundingBox()
+    if abs(bb.YMin-C['rear_face_y_source'])<1e-5 and abs(bb.YMax-C['rear_face_y_source'])<1e-5:
+        for wire in face.Wires:
+            wb=wire.optimalBoundingBox();cx=(wb.XMin+wb.XMax)/2;cz=(wb.ZMin+wb.ZMax)/2
+            if abs(abs(cx)-C['rear_mount_pitch']/2)<1e-4 and abs(abs(cz)-C['rear_mount_pitch']/2)<1e-4:
+                assert abs(wb.XLength-C['rear_hole_entry_diameter_model'])<1e-4
+                rear_holes.append((cx,cz))
+assert len(rear_holes)==4,rear_holes
+rear_global=[]
+for x,z in rear_holes:
+    pt=refs['camera'].Placement.multVec(V(x,C['rear_face_y_source'],z))
+    rear_global.append(list(pt))
+    assert abs(pt.x-(C['forward_offset']+C['rear_face_y_source']))<1e-8
+    # Clear through-hole to each camera back-face hole.
+    bore=Part.makeCylinder(R['camera_clearance_diameter']/2-0.02,R['thickness']+0.1,
+                          V(pt.x-R['thickness']-0.1,pt.y,pt.z),V(1,0,0))
+    assert shape.common(bore).Volume<1e-5
+    # Rear screwdriver/head access is kept clear of the two rear gussets.
+    approach=Part.makeCylinder(2.75,40,V(pt.x-R['thickness']-40,pt.y,pt.z),V(1,0,0))
+    assert shape.common(approach).Volume<1e-5
+# Exact camera underside planes are supported on the base top, minus bolt openings.
+full_foot_area=0.;supported_area=0.
+for face in refs['camera'].Shape.Faces:
+    bb=face.optimalBoundingBox()
+    if isinstance(face.Surface,Part.Plane) and abs(bb.ZMin-B['thickness'])<1e-5 and abs(bb.ZMax-B['thickness'])<1e-5:
+        full_foot_area+=face.Area
+        supported_area+=face.common(shape).Area
+assert full_foot_area>500 and supported_area/full_foot_area>0.80,(full_foot_area,supported_area)
+# The rear connector crosses the back plate only through the cable opening at the
+# final height: install by translating rearward along X, with the connector leading.
+# Check real sensor geometry at representative approach positions; a cuboid would
+# incorrectly fill the connector clearance and the empty space behind the body.
+for dx in [0.25,1,3,6,10,20,40,80]:
+    moved=refs['camera'].Shape.copy();moved.translate(V(dx,0,0))
+    assert shape.common(moved).Volume<1e-5,('Camera rearward assembly blocked',dx)
+# Conservative full-forward-hemisphere check, retaining the previous pupil assumption.
 fov_plane=C['forward_offset']+C['lens_barrel_rear_x_source']
 margin=fov_plane-shape.BoundBox.XMax
-assert margin>5, 'Fixture must stay at least 5 mm behind the assumed pupil lower-bound plane'
-# Camera slides in from +X with connector leading. Check the complete translation interval
-# conservatively using the swept bounding envelope, not only a few sample positions.
-cb=refs['camera'].Shape.optimalBoundingBox()
-# STEP tolerance inflates the bounding box slightly below the seating plane.
-# Sliding contact at the exact plate top is allowed; all other envelope faces
-# retain the conservative STEP bounds.
-sweep=Part.makeBox(cb.XLength+100,cb.YLength,cb.ZMax-B['thickness'],V(cb.XMin,cb.YMin,B['thickness']))
-insertion_overlap=shape.common(sweep).Volume
-assert insertion_overlap<1e-4,('Camera insertion path blocked',insertion_overlap)
-# Screwdriver corridors remain clear from above while camera is absent.
+assert margin>=C['minimum_rear_margin'],('Forward clearance',margin)
 for h in holes:
     if h['type']=='LIDAR':
         x,y=h['xy'];probe=Part.makeCylinder(2.75,90,V(x,y,B['thickness']-L['counterbore_depth']))
         assert shape.common(probe).Volume<1e-5,('Blocked LiDAR screw access',h)
-# Captive nuts can be inserted from the open camera tunnel before inserting camera.
 mesh=MeshPart.meshFromShape(Shape=shape,LinearDeflection=.06,AngularDeflection=.18,Relative=False)
 assert mesh.isSolid() and not mesh.hasNonManifolds() and mesh.countComponents()==1
 assert not mesh.hasNonUniformOrientedFacets()
@@ -168,7 +206,9 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
         'fixture_valid_solid':True,'stl_closed_manifold':True,'stl_connected_components':1,'stl_facets':mesh.CountFacets,
         'fixture_bounds_mm':dict(x=[shape.BoundBox.XMin,shape.BoundBox.XMax],y=[shape.BoundBox.YMin,shape.BoundBox.YMax],z=[shape.BoundBox.ZMin,shape.BoundBox.ZMax]),
         'camera_forward_shift_mm':C['forward_offset'],'interference_volume_mm3':interferences,
-        'camera_insertion_swept_envelope':'PASS - unobstructed front insertion with clamping screws backed off',
+        'camera_assembly_approach':'PASS - exact sensor at 8 approach offsets along X; final rear contact and cable clearance',
+        'camera_back_hole_centers_global':rear_global,'camera_foot_area_mm2':full_foot_area,
+        'camera_supported_area_mm2':supported_area,'camera_support_fraction':supported_area/full_foot_area,
         'lidar_screw_access':'PASS - all four screws accessible before camera insertion',
         'directions':dict(camera_forward=list(camdir),lidar_scan=list(liddir),camera_cable=list(camport),lidar_cable=list(lidport)),
         'fov':dict(assumption='Entrance pupil at or forward of lens-barrel rear plane; all forward rays have nonnegative X direction',
@@ -186,12 +226,13 @@ App.closeDocument(D.Name)
 D=App.openDocument(str(OUT/'fixture.FCStd'));D.recompute()
 assert D.PrintableFixture.Shape.isValid()
 assert abs(D.PrintableFixture.Shape.Volume-shape.Volume)<1e-5
-oldmax=D.PrintableFixture.Shape.optimalBoundingBox().ZMax
-roofcell=D.Parameters.getCellFromAlias('RoofT');D.Parameters.set(roofcell,f"{values['RoofT']+1} mm");D.recompute()
-assert abs(D.PrintableFixture.Shape.optimalBoundingBox().ZMax-oldmax-1)<1e-6
-D.Parameters.set(roofcell,f"{values['RoofT']} mm");D.recompute()
+old_back_volume=D.BackPlate.Shape.Volume
+cell=D.Parameters.getCellFromAlias('BackT');D.Parameters.set(cell,f"{values['BackT']+1} mm");D.recompute()
+assert D.PrintableFixture.Shape.isValid() and D.BackPlate.Shape.Volume>old_back_volume
+assert abs(D.BackPlate.Length.Value-values['BackT']-1)<1e-6
+D.Parameters.set(cell,f"{values['BackT']} mm");D.recompute()
 assert abs(D.PrintableFixture.Shape.Volume-shape.Volume)<1e-5
-report['FCStd_reopen_parameter_edit']='PASS - reopen, change roof thickness by +1 mm, recompute, restore'
+report['FCStd_reopen_parameter_edit']='PASS - reopen, change back plate thickness +1 mm, recompute, restore'
 step_check=Part.read(str(OUT/'fixture.step'))
 assert step_check.isValid() and len(step_check.Solids)==1
 assert math.isclose(step_check.Volume,shape.Volume,rel_tol=1e-7)

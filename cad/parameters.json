@@ -1,10 +1,85 @@
 {
   "units": "mm",
-  "status": "PLA prototype - one printed fixture; hardware and optical assumptions require physical verification",
-  "plate": {"length_x": 90.0, "width_y": 100.0, "thickness": 8.0, "center_x": -10.0, "corner_radius": 8.0, "host_holes_xy": [[-43,-42],[23,-42],[-43,42],[23,42]], "host_hole_diameter": 5.7},
-  "camera": {"reference_file": "reference/c2_176.step", "forward_offset": 30.0, "bottom_z_source": -22.5, "lens_barrel_rear_x_source": 12.9, "horizontal_fov_assumed_deg": 176.0, "entrance_pupil_verified": false},
-  "lidar": {"reference_file": "reference/mid360.step", "bottom_y_source": -25.9171, "hole_pitch_x": 48.0, "hole_pitch_y": 36.0, "clearance_diameter": 3.6, "counterbore_diameter": 6.8, "counterbore_depth": 3.5},
-  "cage": {"rear_relative_x": -13.5, "length_x": 17.0, "inside_width": 45.6, "inside_height": 45.6, "wall_thickness": 7.0, "roof_thickness": 5.0, "screw_relative_x": -5.0, "screw_z_above_floor": [14.5,30.5], "screw_clearance_diameter": 4.6, "nut_across_flats": 7.3, "nut_depth": 3.4, "driver_hole_diameter": 8.0},
-  "printing": {"process": "FDM", "material": "PLA", "nozzle_mm": 0.4, "layer_height_mm": 0.2, "wall_count": 5, "top_bottom_layers": 6, "infill_percent": 40, "infill_pattern": "gyroid", "orientation": "Plate underside Z=0 on bed", "supports": "Required under internal cage roof; allow support on model; remove through open front/rear", "brim_mm": 5},
-  "unresolved": ["Exact entrance pupil and vertical/diagonal FOV; check real image including distortion", "PLA heat/creep near powered sensors; intended as prototype until thermal and load tests", "Camera clamp pressure and screw retention", "MID-360 thread, insertion limit and inverted operation", "Actual plugs/cable bends and host support structure"]
+  "status": "PLA prototype - one-piece rear screw bracket; verify threads, optics and operating temperature",
+  "plate": {
+    "length_x": 86.0,
+    "width_y": 100.0,
+    "thickness": 8.0,
+    "center_x": -12.0,
+    "corner_radius": 8.0,
+    "host_holes_xy": [
+      [
+        -43,
+        -42
+      ],
+      [
+        23,
+        -42
+      ],
+      [
+        -43,
+        42
+      ],
+      [
+        23,
+        42
+      ]
+    ],
+    "host_hole_diameter": 5.7
+  },
+  "camera": {
+    "reference_file": "reference/c2_176.step",
+    "forward_offset": 22.0,
+    "bottom_z_source": -22.5,
+    "lens_barrel_rear_x_source": 12.9,
+    "horizontal_fov_assumed_deg": 176.0,
+    "entrance_pupil_verified": false,
+    "rear_face_y_source": -16.4,
+    "rear_mount_pitch": 25.0,
+    "rear_hole_entry_diameter_model": 2.57,
+    "rear_hole_axis_first_obstruction_mm": 7.0,
+    "minimum_rear_margin": 3.0
+  },
+  "lidar": {
+    "reference_file": "reference/mid360.step",
+    "bottom_y_source": -25.9171,
+    "hole_pitch_x": 48.0,
+    "hole_pitch_y": 36.0,
+    "clearance_diameter": 3.6,
+    "counterbore_diameter": 6.8,
+    "counterbore_depth": 3.5
+  },
+  "printing": {
+    "process": "FDM",
+    "material": "PLA",
+    "nozzle_mm": 0.4,
+    "layer_height_mm": 0.2,
+    "wall_count": 5,
+    "top_bottom_layers": 6,
+    "infill_percent": 40,
+    "infill_pattern": "gyroid",
+    "orientation": "Plate underside Z=0 on bed",
+    "supports": "Start with supports off: cable opening has 45-degree teardrop top; inspect small horizontal screw-hole bridges in slicer",
+    "brim_mm": 5
+  },
+  "unresolved": [
+    "Exact entrance pupil and vertical/diagonal FOV; confirm actual full-frame image",
+    "PLA heating/creep, load and vibration under operating conditions",
+    "Camera rear thread specification and screw insertion limit; STEP provides geometry only",
+    "MID-360 thread, insertion limit and inverted operation",
+    "Mating cable plug dimensions/bends and host support"
+  ],
+  "rear_bracket": {
+    "thickness": 6.0,
+    "width": 55.0,
+    "height_above_base": 54.0,
+    "camera_clearance_diameter": 3.6,
+    "cable_diameter": 16.0,
+    "cable_center_height_above_camera_bottom": 37.5,
+    "brace_width": 5.0,
+    "brace_depth": 16.0,
+    "brace_height": 26.0,
+    "reference_url": "https://www.switch-science.com/products/8509",
+    "reference_access": "HTTP proxy denied; geometry taken from user STEP and user description"
+  }
 }

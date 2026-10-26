@@ -32,79 +32,79 @@ def add_meshes(ax,meshes,keys):
 
 
 def render(p,r,meshes):
-    b,c,k=p['plate'],p['camera'],p['cage']
-    cx=c['forward_offset'];t=b['thickness']
+    b,c,k=p['plate'],p['camera'],p['rear_bracket']
+    cx=c['forward_offset'];t=b['thickness'];back=cx+c['rear_face_y_source']
     f=plt.figure(figsize=(15,10),facecolor='white')
-    f.suptitle('FreeCAD | Single-piece PLA sensor mount',x=.05,ha='left',fontsize=22,weight='bold')
-    f.text(.05,.927,'CAMERA +30 mm FORWARD / ONE PRINTED PART / MID-360 DOWN / BOTH CABLE PORTS REARWARD',fontsize=10.5,color='#286678')
+    f.suptitle('FreeCAD | Rear screw bracket + camera support base',x=.05,ha='left',fontsize=21,weight='bold')
+    f.text(.05,.927,'CAMERA 8 mm REARWARD / 25 x 25 REAR HOLES / CABLE OPENING / ONE PLA PRINT',fontsize=11,color='#286678')
     ax=f.add_subplot(121,projection='3d')
     add_meshes(ax,meshes,['fixture','camera','lidar'])
-    ax.set(xlim=(-65,70),ylim=(-60,60),zlim=(-70,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
-    ax.set_box_aspect((135,120,140));ax.view_init(elev=20,azim=35)
-    ax.set_title('Assembly with supplied sensor STEP models',fontsize=11)
+    ax.set(xlim=(-65,65),ylim=(-60,60),zlim=(-70,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
+    ax.set_box_aspect((130,120,140));ax.view_init(elev=20,azim=35)
+    ax.set_title('Camera above, inverted MID-360 below',fontsize=11)
     ax=f.add_subplot(222,projection='3d')
     add_meshes(ax,meshes,['fixture'])
-    ax.set(xlim=(-60,40),ylim=(-55,55),zlim=(0,65),xlabel='X',ylabel='Y',zlabel='Z')
-    ax.set_box_aspect((100,110,65));ax.view_init(elev=25,azim=45)
-    ax.set_title('Print this part only: 90 x 100 x 58.6 mm',fontsize=11)
+    ax.set(xlim=(-60,35),ylim=(-55,55),zlim=(0,68),xlabel='X',ylabel='Y',zlabel='Z')
+    ax.set_box_aspect((95,110,68));ax.view_init(elev=22,azim=155)
+    ax.set_title('Rear view | 4 screw holes + teardrop cable opening',fontsize=10.5)
     ax=f.add_subplot(224)
     plane=r['fov']['pupil_lower_bound_x'];front=r['fov']['fixture_max_x']
-    ax.axvspan(plane,85,facecolor='#dceee2',alpha=.75)
+    ax.axvspan(plane,75,facecolor='#dceee2',alpha=.75)
     ax.add_patch(Rectangle((b['center_x']-b['length_x']/2,0),b['length_x'],t,color=COLORS['fixture'],alpha=.9))
-    # Side projection of rear camera sleeve, housing, barrel and cable connector.
-    ax.add_patch(Rectangle((cx+k['rear_relative_x'],t),k['length_x'],k['inside_height']+k['roof_thickness'],color=COLORS['fixture'],alpha=.55))
+    ax.add_patch(Rectangle((back-k['thickness'],t),k['thickness'],k['height_above_base'],color=COLORS['fixture'],alpha=.8))
     ax.add_patch(Rectangle((cx-16.4,t),38.1,45,facecolor=COLORS['camera'],edgecolor='#8c672c',alpha=.55))
     ax.add_patch(Rectangle((cx+22.8,t+10.5),6.7,24,facecolor=COLORS['camera']))
     ax.add_patch(Rectangle((cx-28.3,t+33.75),11.9,7.5,facecolor=COLORS['camera']))
     ax.axvline(plane,color='#38784c',ls='--',lw=1.3)
-    ax.text(plane+3,65,'Forward rays',color='#38784c',fontsize=9)
+    ax.text(plane+3,66,'Forward rays',color='#38784c',fontsize=9)
     ax.annotate('',xy=(plane,-8),xytext=(front,-8),arrowprops=dict(arrowstyle='<->',color='#38784c'))
     ax.text((plane+front)/2,-18,f"{r['fov']['clearance_behind_plane_mm']:.1f} mm",ha='center',fontsize=9,color='#38784c')
     ax.text(-53,-31,'Dashed plane = assumed pupil lower bound\nActual pupil / full FOV need image verification',fontsize=8,color='#5c6871')
-    ax.annotate('+X',xy=(80,30.5),xytext=(68,30.5),fontsize=9,arrowprops=dict(arrowstyle='->'))
-    ax.set(xlim=(-65,85),ylim=(-42,77),title='SIDE | fixture behind lens barrel (schematic)')
+    ax.annotate('+X',xy=(70,30.5),xytext=(58,30.5),fontsize=9,arrowprops=dict(arrowstyle='->'))
+    ax.set(xlim=(-65,75),ylim=(-42,77),title='SIDE | base supports camera (schematic)')
     ax.set_aspect('equal');ax.axis('off')
-    f.text(.05,.074,'PLA FDM: plate underside on bed | supports required inside sleeve | 0.2 mm layers, 5 walls, 40% infill',fontsize=10.5)
-    f.text(.05,.045,'One printed part + commercial screws/nuts. Verify fit, actual image, clamp retention and temperature before use.',fontsize=9,color='#a04428')
+    f.text(.05,.074,f"Camera underside contact: {r['camera_supported_area_mm2']:.1f} / {r['camera_foot_area_mm2']:.1f} mm2 ({100*r['camera_support_fraction']:.1f}%)",fontsize=10.5)
+    f.text(.05,.045,'Single PLA part + commercial screws. Confirm thread depth, mating plug, actual image and operating temperature.',fontsize=9,color='#a04428')
     f.subplots_adjust(top=.87,bottom=.14,wspace=.13,hspace=.29)
     f.savefig(OUT/'assembly_preview.png',dpi=160)
     with PdfPages(OUT/'review_drawing.pdf') as pdf:
         pdf.savefig(f)
         f2,ax=plt.subplots(figsize=(11.7,8.3));ax.axis('off')
         lines=[
-          'SINGLE-PIECE PLA FIXTURE | Dimensions, printing and assembly (mm)','',
-          'FreeCAD native feature tree + editable Parameters spreadsheet; exported STL is fixture only.',
-          f"Base: {b['length_x']:g} x {b['width_y']:g} x {t:g}, XY center ({b['center_x']:g},0), R{b['corner_radius']:g}.",
-          f"Sleeve: X={cx+k['rear_relative_x']:g} to {cx+k['rear_relative_x']+k['length_x']:g}; internal {k['inside_width']:g}(Y) x {k['inside_height']:g}(Z).",
-          f"Walls {k['wall_thickness']:g}; roof {k['roof_thickness']:g}; overall printed height {r['fixture_bounds_mm']['z'][1]:g}.",
-          'Camera origin X=30, Y=0; camera bottom Z=8. LiDAR mounting face Z=0, scan -Z.',
-          'Camera forward +X. Both cable ports point rearward -X.','',
+          'ONE-PIECE REAR BRACKET | Dimensions and assembly (mm)','',
+          'FreeCAD native tree and editable Parameters spreadsheet. STL contains fixture only.',
+          f"Base: {b['length_x']:g} x {b['width_y']:g} x {t:g}, center ({b['center_x']:g},0), R{b['corner_radius']:g}; front X={front:g}.",
+          f"Rear plate: {k['thickness']:g} thick x {k['width']:g} wide x {k['height_above_base']:g} above base; Z top={t+k['height_above_base']:g}.",
+          f"Rear plate camera contact face X={back:g}; rear face X={back-k['thickness']:g}.",
+          'Camera datum X=22 (8 mm rearward from previous X=30), Y=0; bottom Z=8.',
+          'MID-360 datum XY=(0,0), mounting face Z=0, scan downward -Z. Both cables exit -X.','',
+          'CAMERA REAR ATTACHMENT:',
+          ' 4 x dia 3.6 THRU along X at Y=+/-12.5, Z=18 and 43 (25 x 25 pitch).',
+          ' Source STEP rear face Y=-16.4: four entry loops diameter 2.57 at X/Z=+/-12.5.',
+          ' M3 thread inferred; axial solid begins 7 mm inside source holes. Verify actual specification.',
+          ' M3x10 through 6 mm rear plate gives 4 mm insertion WITHOUT washers (conditional).',
+          ' Cable opening centered Y=0, Z=45.5: full diameter 16 clearance + 45-degree teardrop roof.',
+          ' Two rear-only gussets: 5 mm wide, 16 mm deep, 26 mm high, with 1 mm root overlaps.','',
           'BASE HOLES:']
         for h in r['holes']:
-            x,y=h['xy'];s=f" {h['type']:5s}: ({x:g},{y:g}), dia {h['diameter']:g} THRU"
-            if 'counterbore' in h:s+=f"; TOP counterbore dia {h['counterbore']:g} x {h['depth']:g} deep"
-            lines.append(s)
+            x,y=h['xy'];line=f" {h['type']:5s}: ({x:g},{y:g}), dia {h['diameter']:g} THRU"
+            if 'counterbore' in h:line+=f"; TOP counterbore dia {h['counterbore']:g} x {h['depth']:g} deep"
+            lines.append(line)
         lines += ['',
-          'Roof driver access: 2 x dia 8 at XY=(24,+/-18), aligned to forward LiDAR screws.',
-          'Clamp screw axes: X=25, Z=22.5 and 38.5; direction Y; dia 4.6 through +Y wall.',
-          'M4 nut pockets: 7.3 across flats, 3.4 deep from INSIDE of +Y wall.',
-          'Use two M4 nylon-tipped screws + two M4 nuts (commercial parts).','',
-          'PRINT: PLA; 0.4 nozzle, 0.2 layer, 5 walls, 6 top/bottom layers, 40% gyroid, 5 mm brim.',
-          'Orient base underside Z=0 on bed. Supports MUST reach sleeve roof from the base top.',
-          'Use support on model/everywhere; remove from open front/rear. Deburr holes/pockets.',
-          'Temperature/speed follow the actual PLA and printer profile. No machine G-code supplied.','',
+          'PRINT: PLA; base underside on bed; 0.4 nozzle, 0.2 layers, 5 walls, 6 top/bottom layers.',
+          ' 40% gyroid and 5 mm brim are starting values. Inspect overhangs/bridges in slicer.',
+          ' Start with supports off: cable opening has a 45-degree roof, horizontal screw holes are small.',
+          ' Temperature/speed follow filament and printer profiles. Deburr holes and contact faces.','',
           'ASSEMBLY:',
-          '1. Remove supports. Insert 2 M4 nuts from sleeve interior; back off clamp screw tips.',
-          '2. Fasten inverted LiDAR: rear screws directly, front screws through roof access holes.',
-          '   M3x8 gives 3.5 mm insertion with the modeled counterbores: verify actual allowed depth.',
-          '3. Slide camera in from +X, rear connector first. Seat and tighten nylon tips gently.',
-          '   M4x12 is a starting choice; verify actual screw tip/head geometry and reach.',
-          '4. Use 4 host M5 holes; host must leave the suspended LiDAR and rear cables clear.','',
-          f"OPTICS: fixture Xmax={front:g}; assumed pupil lower-bound plane X={plane:g}; rear margin {plane-front:g}.",
-          'All fixture material is behind this plane, excluding it from the assumed forward hemisphere.',
-          'Exact entrance pupil and full calibrated FOV are absent from STEP: verify actual images.',
-          'PLA is a prototype material here: verify sensor heating, creep, vibration and retention.',
-          f"Solid PLA mass at 1.24 g/cm3: {r['pla_solid_mass_g_at_1_24']:.1f} g; slicer mass differs with infill/support."]
+          '1. Attach inverted LiDAR to base with 4 screws. M3x8 implies 3.5 mm insertion: verify limit.',
+          '2. Rest camera on base, move rearward so connector enters cable opening and rear face seats.',
+          '3. Fasten 4 rear camera screws from -X. Verify thread, insertion and tightening torque.',
+          '4. Connect cables. Attach host via 4 M5 clearance holes; keep LiDAR/cable volumes clear.','',
+          f"CAMERA SUPPORT: {r['camera_supported_area_mm2']:.1f} of {r['camera_foot_area_mm2']:.1f} mm2 bottom planes contact the base.",
+          f"FOV: fixture Xmax={front:g}; assumed pupil lower-bound X={plane:g}; rear clearance {plane-front:.1f}.",
+          'All fixture material remains behind this plane. Exact pupil and full FOV absent from STEP.',
+          'Verify full-frame images, cable plug clearance, PLA temperature/creep, loads and vibration.',
+          f"Solid PLA mass at 1.24 g/cm3: {r['pla_solid_mass_g_at_1_24']:.1f} g; actual print includes infill/support effects."]
         ax.text(.01,.98,'\n'.join(lines),va='top',family='monospace',fontsize=8.1,linespacing=1.18)
         pdf.savefig(f2);plt.close(f2)
     plt.close(f)

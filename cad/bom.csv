@@ -1,6 +1,5 @@
 item,quantity,material_or_spec,notes
-printed fixture,1,PLA,90x100x58.6; integral base and camera sleeve; supports required
-camera clamp screw,2,M4x12 nylon-tipped proposal,commercial hardware; confirm tip reach and housing pressure
-camera clamp nut,2,M4 hex nut,nominal flats7 thickness3.2; modeled pockets flats7.3 depth3.4
-LiDAR screw,4,M3x8 conditional,modeled head clearance dia6.8 depth3.5; insertion3.5; confirm actual thread and depth
-host fastener,4,M5 proposal,host-dependent length; host must clear suspended LiDAR and cables
+printed fixture,1,PLA,86x100x62; integral support base and rear bracket; teardrop cable opening
+camera rear screw,4,M3x10 conditional,25x25 pattern; 6mm plate gives 4mm insertion without washer; confirm actual thread/depth
+LiDAR screw,4,M3x8 conditional,head clearance dia6.8 depth3.5; insertion3.5; confirm actual thread/depth
+host fastener,4,M5 proposal,host-dependent length; host must clear LiDAR and rear cables
