@@ -2,3 +2,4 @@
 *.stp binary
 *.stl binary
 *.dxf binary
+*.FCStd binary

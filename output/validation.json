@@ -1,251 +1,166 @@
 {
-  "status": "REVIEW - vertical stack, camera above, inverted MID-360 below; both connectors rearward",
-  "units": "mm",
-  "sensor_XY_datums": {
-    "camera": [
-      0.0,
-      0.0
+  "engine": "FreeCAD 1.0.0",
+  "status": "PLA prototype - one printed fixture; hardware and optical assumptions require physical verification",
+  "printed_part_count": 1,
+  "fixture_valid_solid": true,
+  "stl_closed_manifold": true,
+  "stl_connected_components": 1,
+  "stl_facets": 4912,
+  "fixture_bounds_mm": {
+    "x": [
+      -55.0,
+      35.0
     ],
-    "lidar": [
+    "y": [
+      -50.0,
+      50.0
+    ],
+    "z": [
       0.0,
-      0.0
+      58.60000000000001
     ]
   },
-  "camera_z_range": [
-    7.999998448490001,
-    53.000003143314984
-  ],
-  "lidar_z_range": [
-    -60.0971001,
-    2.5269286663132107e-11
-  ],
-  "sensor_mounting_face_separation_mm": 7.999998448464732,
+  "camera_forward_shift_mm": 30.0,
+  "interference_volume_mm3": {
+    "camera": 0.0,
+    "lidar": 0.0
+  },
+  "camera_insertion_swept_envelope": "PASS - unobstructed front insertion with clamping screws backed off",
+  "lidar_screw_access": "PASS - all four screws accessible before camera insertion",
   "directions": {
     "camera_forward": [
       1.0,
-      1.1102230246251565e-16,
+      -2.220446049250313e-16,
       0.0
     ],
-    "lidar_scan_axis": [
-      -1.359631073446891e-32,
-      -1.1102230246251565e-16,
+    "lidar_scan": [
+      2.465190328815662e-32,
+      2.220446049250313e-16,
       -1.0
     ],
-    "camera_cable_outward": [
+    "camera_cable": [
       -1.0,
-      -1.1102230246251565e-16,
+      2.220446049250313e-16,
       0.0
     ],
-    "lidar_cable_outward": [
+    "lidar_cable": [
       -1.0,
       1.2246467991473532e-16,
       0.0
     ]
   },
-  "lidar_hole_alignment": "PASS - source 48 x 36 pattern matches inverted placement",
-  "connector_centers_global": {
-    "camera": [
-      -27.7438,
-      -3.080180555059542e-15,
-      45.5
-    ],
-    "lidar": [
-      -39.44,
-      6.125315280897577e-15,
-      -14.250000000000002
-    ]
+  "fov": {
+    "assumption": "Entrance pupil at or forward of lens-barrel rear plane; all forward rays have nonnegative X direction",
+    "pupil_lower_bound_x": 42.9,
+    "fixture_max_x": 35.0,
+    "clearance_behind_plane_mm": 7.899999999999999,
+    "claimed_horizontal_fov_deg": 176.0,
+    "entrance_pupil_verified": false,
+    "result": "PASS for assumed forward hemisphere; verify actual image and full calibrated FOV"
   },
-  "connector_geometry_check": "PASS - transformed STEP connector cylinders aligned with X",
-  "positive_volume_interferences": {},
-  "recessed_head_checks": [
+  "fixture_volume_mm3": 85034.9444743181,
+  "pla_solid_mass_g_at_1_24": 105.44333114815444,
+  "holes": [
     {
-      "tag": "LIDAR",
+      "type": "HOST",
+      "xy": [
+        -43,
+        -42
+      ],
+      "diameter": 5.7
+    },
+    {
+      "type": "HOST",
+      "xy": [
+        23,
+        -42
+      ],
+      "diameter": 5.7
+    },
+    {
+      "type": "HOST",
+      "xy": [
+        -43,
+        42
+      ],
+      "diameter": 5.7
+    },
+    {
+      "type": "HOST",
+      "xy": [
+        23,
+        42
+      ],
+      "diameter": 5.7
+    },
+    {
+      "type": "LIDAR",
       "xy": [
         -24.0,
         -18.0
       ],
-      "head_z_range": [
-        4.5,
-        7.5
-      ]
+      "diameter": 3.6,
+      "counterbore": 6.8,
+      "depth": 3.5
     },
     {
-      "tag": "LIDAR",
+      "type": "LIDAR",
       "xy": [
         -24.0,
         18.0
       ],
-      "head_z_range": [
-        4.5,
-        7.5
-      ]
+      "diameter": 3.6,
+      "counterbore": 6.8,
+      "depth": 3.5
     },
     {
-      "tag": "LIDAR",
+      "type": "LIDAR",
       "xy": [
         24.0,
         -18.0
       ],
-      "head_z_range": [
-        4.5,
-        7.5
-      ]
+      "diameter": 3.6,
+      "counterbore": 6.8,
+      "depth": 3.5
     },
     {
-      "tag": "LIDAR",
+      "type": "LIDAR",
       "xy": [
         24.0,
         18.0
       ],
-      "head_z_range": [
-        4.5,
-        7.5
-      ]
-    },
-    {
-      "tag": "POST",
-      "xy": [
-        -8.0,
-        -26.8
-      ],
-      "head_z_range": [
-        0.5,
-        4.5
-      ]
-    },
-    {
-      "tag": "POST",
-      "xy": [
-        -8.0,
-        26.8
-      ],
-      "head_z_range": [
-        0.5,
-        4.5
-      ]
+      "diameter": 3.6,
+      "counterbore": 6.8,
+      "depth": 3.5
     }
   ],
-  "solids": {
-    "plate": 1,
-    "post_1": 1,
-    "post_2": 1,
-    "cap": 1,
-    "top_pad": 1,
-    "camera": 1,
-    "lidar": 7
+  "printing": {
+    "process": "FDM",
+    "material": "PLA",
+    "nozzle_mm": 0.4,
+    "layer_height_mm": 0.2,
+    "wall_count": 5,
+    "top_bottom_layers": 6,
+    "infill_percent": 40,
+    "infill_pattern": "gyroid",
+    "orientation": "Plate underside Z=0 on bed",
+    "supports": "Required under internal cage roof; allow support on model; remove through open front/rear",
+    "brim_mm": 5
   },
-  "metal_mass_kg_at_2700_kg_m3": 0.21827553777022565,
-  "plate_holes": [
-    {
-      "xy": [
-        -43.0,
-        -42.0
-      ],
-      "d": 5.5,
-      "tag": "HOST"
-    },
-    {
-      "xy": [
-        23.0,
-        -42.0
-      ],
-      "d": 5.5,
-      "tag": "HOST"
-    },
-    {
-      "xy": [
-        -43.0,
-        42.0
-      ],
-      "d": 5.5,
-      "tag": "HOST"
-    },
-    {
-      "xy": [
-        23.0,
-        42.0
-      ],
-      "d": 5.5,
-      "tag": "HOST"
-    },
-    {
-      "xy": [
-        -24.0,
-        -18.0
-      ],
-      "d": 3.4,
-      "tag": "LIDAR",
-      "cbore_d": 6.5,
-      "cbore_depth": 3.5,
-      "cbore_side": "TOP"
-    },
-    {
-      "xy": [
-        -24.0,
-        18.0
-      ],
-      "d": 3.4,
-      "tag": "LIDAR",
-      "cbore_d": 6.5,
-      "cbore_depth": 3.5,
-      "cbore_side": "TOP"
-    },
-    {
-      "xy": [
-        24.0,
-        -18.0
-      ],
-      "d": 3.4,
-      "tag": "LIDAR",
-      "cbore_d": 6.5,
-      "cbore_depth": 3.5,
-      "cbore_side": "TOP"
-    },
-    {
-      "xy": [
-        24.0,
-        18.0
-      ],
-      "d": 3.4,
-      "tag": "LIDAR",
-      "cbore_d": 6.5,
-      "cbore_depth": 3.5,
-      "cbore_side": "TOP"
-    },
-    {
-      "xy": [
-        -8.0,
-        -26.8
-      ],
-      "d": 4.5,
-      "tag": "POST",
-      "cbore_d": 8.0,
-      "cbore_depth": 4.5,
-      "cbore_side": "BOTTOM"
-    },
-    {
-      "xy": [
-        -8.0,
-        26.8
-      ],
-      "d": 4.5,
-      "tag": "POST",
-      "cbore_d": 8.0,
-      "cbore_depth": 4.5,
-      "cbore_side": "BOTTOM"
-    }
+  "unresolved": [
+    "Exact entrance pupil and vertical/diagonal FOV; check real image including distortion",
+    "PLA heat/creep near powered sensors; intended as prototype until thermal and load tests",
+    "Camera clamp pressure and screw retention",
+    "MID-360 thread, insertion limit and inverted operation",
+    "Actual plugs/cable bends and host support structure"
   ],
   "source_sha256": {
     "camera": "220a4cd902959a2154054680a6834b6826a77bc83f53de7b971f4fc7a09b23d2",
     "lidar": "b93e9b51282ed319b6aa755e76a132c0eb03306da5f3b9676bcabf2e2ae25f02"
   },
-  "unresolved": [
-    "MID-360 thread specification, approved insertion depth and inverted installation guidance",
-    "Camera housing allowable clamp pressure and friction retention",
-    "Host mount pattern and fastener access",
-    "Mating cable plugs, bend radii, full FOV and lidar shadow",
-    "Strength, stiffness, vibration and thermal validation"
-  ],
-  "step_roundtrip": "PASS: 5 generated parts and 13-solid assembly",
-  "dxf_checks": "PASS: top plate 10 contours, bottom plate 10 contours, cap 2 holes; use PDF for drilling depths"
+  "parameters_sha256": "57ca6a0be33713de83a5bbeb0a9b2f0bdbb5028f41504d882481d9145f9a5358",
+  "model_script_sha256": "9de8dc7796325eb5208448d0fa48ba042bc61db4e930c874fa127a29f90581ac",
+  "STL_roundtrip": "PASS - reimported closed manifold, one connected component",
+  "FCStd_reopen_parameter_edit": "PASS - reopen, change roof thickness by +1 mm, recompute, restore",
+  "STEP_roundtrip": "PASS - valid single solid, volume preserved"
 }
