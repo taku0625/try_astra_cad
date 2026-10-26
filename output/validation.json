@@ -1,16 +1,130 @@
 {
-  "status": "REVIEW - based on supplied STEP; fastening and loads to be confirmed",
+  "status": "REVIEW - vertical stack, camera above, inverted MID-360 below; both connectors rearward",
   "units": "mm",
-  "bottom_z": {
-    "camera": 5.999998448490001,
-    "lidar": 5.99999999997473
+  "sensor_XY_datums": {
+    "camera": [
+      0.0,
+      0.0
+    ],
+    "lidar": [
+      0.0,
+      0.0
+    ]
   },
-  "coplanarity_error_mm": 1.5514847291342448e-06,
-  "bottom_planar_face_area_mm2": {
-    "camera": 518.003146712776,
-    "lidar": 3917.4407311536056
+  "camera_z_range": [
+    7.999998448490001,
+    53.000003143314984
+  ],
+  "lidar_z_range": [
+    -60.0971001,
+    2.5269286663132107e-11
+  ],
+  "sensor_mounting_face_separation_mm": 7.999998448464732,
+  "directions": {
+    "camera_forward": [
+      1.0,
+      1.1102230246251565e-16,
+      0.0
+    ],
+    "lidar_scan_axis": [
+      -1.359631073446891e-32,
+      -1.1102230246251565e-16,
+      -1.0
+    ],
+    "camera_cable_outward": [
+      -1.0,
+      -1.1102230246251565e-16,
+      0.0
+    ],
+    "lidar_cable_outward": [
+      -1.0,
+      1.2246467991473532e-16,
+      0.0
+    ]
   },
+  "lidar_hole_alignment": "PASS - source 48 x 36 pattern matches inverted placement",
+  "connector_centers_global": {
+    "camera": [
+      -27.7438,
+      -3.080180555059542e-15,
+      45.5
+    ],
+    "lidar": [
+      -39.44,
+      6.125315280897577e-15,
+      -14.250000000000002
+    ]
+  },
+  "connector_geometry_check": "PASS - transformed STEP connector cylinders aligned with X",
   "positive_volume_interferences": {},
+  "recessed_head_checks": [
+    {
+      "tag": "LIDAR",
+      "xy": [
+        -24.0,
+        -18.0
+      ],
+      "head_z_range": [
+        4.5,
+        7.5
+      ]
+    },
+    {
+      "tag": "LIDAR",
+      "xy": [
+        -24.0,
+        18.0
+      ],
+      "head_z_range": [
+        4.5,
+        7.5
+      ]
+    },
+    {
+      "tag": "LIDAR",
+      "xy": [
+        24.0,
+        -18.0
+      ],
+      "head_z_range": [
+        4.5,
+        7.5
+      ]
+    },
+    {
+      "tag": "LIDAR",
+      "xy": [
+        24.0,
+        18.0
+      ],
+      "head_z_range": [
+        4.5,
+        7.5
+      ]
+    },
+    {
+      "tag": "POST",
+      "xy": [
+        -8.0,
+        -26.8
+      ],
+      "head_z_range": [
+        0.5,
+        4.5
+      ]
+    },
+    {
+      "tag": "POST",
+      "xy": [
+        -8.0,
+        26.8
+      ],
+      "head_z_range": [
+        0.5,
+        4.5
+      ]
+    }
+  ],
   "solids": {
     "plate": 1,
     "post_1": 1,
@@ -20,87 +134,105 @@
     "camera": 1,
     "lidar": 7
   },
-  "metal_mass_kg_at_2700_kg_m3": 0.46905936256190406,
+  "metal_mass_kg_at_2700_kg_m3": 0.21827553777022565,
   "plate_holes": [
     {
       "xy": [
-        -73.0,
-        -93.0
+        -43.0,
+        -42.0
       ],
-      "diameter": 5.5,
-      "function": "HOST"
+      "d": 5.5,
+      "tag": "HOST"
     },
     {
       "xy": [
-        33.0,
-        -93.0
+        23.0,
+        -42.0
       ],
-      "diameter": 5.5,
-      "function": "HOST"
+      "d": 5.5,
+      "tag": "HOST"
     },
     {
       "xy": [
-        -73.0,
-        93.0
+        -43.0,
+        42.0
       ],
-      "diameter": 5.5,
-      "function": "HOST"
+      "d": 5.5,
+      "tag": "HOST"
     },
     {
       "xy": [
-        33.0,
-        93.0
+        23.0,
+        42.0
       ],
-      "diameter": 5.5,
-      "function": "HOST"
+      "d": 5.5,
+      "tag": "HOST"
     },
     {
       "xy": [
-        -44.0,
-        32.0
+        -24.0,
+        -18.0
       ],
-      "diameter": 3.4,
-      "function": "LIDAR"
+      "d": 3.4,
+      "tag": "LIDAR",
+      "cbore_d": 6.5,
+      "cbore_depth": 3.5,
+      "cbore_side": "TOP"
     },
     {
       "xy": [
-        -44.0,
-        68.0
+        -24.0,
+        18.0
       ],
-      "diameter": 3.4,
-      "function": "LIDAR"
+      "d": 3.4,
+      "tag": "LIDAR",
+      "cbore_d": 6.5,
+      "cbore_depth": 3.5,
+      "cbore_side": "TOP"
     },
     {
       "xy": [
-        4.0,
-        32.0
+        24.0,
+        -18.0
       ],
-      "diameter": 3.4,
-      "function": "LIDAR"
+      "d": 3.4,
+      "tag": "LIDAR",
+      "cbore_d": 6.5,
+      "cbore_depth": 3.5,
+      "cbore_side": "TOP"
     },
     {
       "xy": [
-        4.0,
-        68.0
+        24.0,
+        18.0
       ],
-      "diameter": 3.4,
-      "function": "LIDAR"
+      "d": 3.4,
+      "tag": "LIDAR",
+      "cbore_d": 6.5,
+      "cbore_depth": 3.5,
+      "cbore_side": "TOP"
     },
     {
       "xy": [
-        17.0,
-        -76.8
+        -8.0,
+        -26.8
       ],
-      "diameter": 4.5,
-      "function": "POST"
+      "d": 4.5,
+      "tag": "POST",
+      "cbore_d": 8.0,
+      "cbore_depth": 4.5,
+      "cbore_side": "BOTTOM"
     },
     {
       "xy": [
-        17.0,
-        -23.2
+        -8.0,
+        26.8
       ],
-      "diameter": 4.5,
-      "function": "POST"
+      "d": 4.5,
+      "tag": "POST",
+      "cbore_d": 8.0,
+      "cbore_depth": 4.5,
+      "cbore_side": "BOTTOM"
     }
   ],
   "source_sha256": {
@@ -108,13 +240,12 @@
     "lidar": "b93e9b51282ed319b6aa755e76a132c0eb03306da5f3b9676bcabf2e2ae25f02"
   },
   "unresolved": [
-    "Actual M3 and M4 thread specification and screw engagement",
+    "MID-360 thread specification, approved insertion depth and inverted installation guidance",
     "Camera housing allowable clamp pressure and friction retention",
-    "Host mount pattern and underside screw head clearance",
-    "Cable plugs, cable bend radii, full FOV and lidar shadow",
+    "Host mount pattern and fastener access",
+    "Mating cable plugs, bend radii, full FOV and lidar shadow",
     "Strength, stiffness, vibration and thermal validation"
   ],
-  "step_roundtrip": "PASS: all five generated components",
-  "assembly_step_solid_count_check": "PASS - 13 solids, matching model components",
-  "dxf_hole_count_check": "PASS - plate 10 circles, cap 2 circles"
+  "step_roundtrip": "PASS: 5 generated parts and 13-solid assembly",
+  "dxf_checks": "PASS: top plate 10 contours, bottom plate 10 contours, cap 2 holes; use PDF for drilling depths"
 }

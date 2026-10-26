@@ -1,52 +1,63 @@
 {
   "units": "mm",
-  "status": "REVIEW - based on supplied STEP; fastening and loads to be confirmed",
+  "status": "REVIEW - vertical stack, camera above, inverted MID-360 below; both connectors rearward",
   "plate": {
-    "length_x": 130.0,
-    "width_y": 210.0,
-    "thickness": 6.0,
-    "center_x": -20.0,
+    "length_x": 90.0,
+    "width_y": 100.0,
+    "thickness": 8.0,
+    "center_x": -10.0,
     "corner_radius": 8.0,
     "host_hole_diameter": 5.5,
     "host_holes_xy": [
       [
-        -73.0,
-        -93.0
+        -43.0,
+        -42.0
       ],
       [
-        33.0,
-        -93.0
+        23.0,
+        -42.0
       ],
       [
-        -73.0,
-        93.0
+        -43.0,
+        42.0
       ],
       [
-        33.0,
-        93.0
+        23.0,
+        42.0
       ]
-    ]
+    ],
+    "camera_post_counterbore_diameter": 8.0,
+    "camera_post_counterbore_depth": 4.5,
+    "lidar_counterbore_diameter": 6.5,
+    "lidar_counterbore_depth": 3.5
   },
   "camera": {
     "model": "TIER4-C2-176DEG",
     "reference_file": "reference/c2_176.step",
     "origin_xy": [
-      25.0,
-      -50.0
+      0.0,
+      0.0
     ],
     "rotation_z_deg": -90.0,
     "original_bottom_z": -22.5,
     "original_optical_axis": "+Y",
-    "mounting": "Rear housing clamp, no bottom holes found in supplied model"
+    "mounting": "Rear housing clamp, no bottom holes found in supplied model",
+    "original_connector_outward_axis": "-Y",
+    "connector_axis_point_source": [
+      0.0,
+      -27.7438,
+      15.0
+    ],
+    "connector_cylinder_radius": 3.15
   },
   "lidar": {
     "model": "Livox MID-360",
     "reference_file": "reference/mid360.step",
     "origin_xy": [
-      -20.0,
-      50.0
+      0.0,
+      0.0
     ],
-    "rotation_x_deg": 90.0,
+    "rotation_x_deg": -90.0,
     "original_bottom_y": -25.9171,
     "holes_local_xy": [
       [
@@ -67,11 +78,20 @@
       ]
     ],
     "clearance_diameter": 3.4,
-    "hole_evidence": "STEP cylinders: axes original +Y/-Y, X=+/-24, Z=+/-18, entrance R1.5 and inner R1.25; 48 x 36 pitch. M3 is inferred, verify thread and insertion depth."
+    "hole_evidence": "STEP cylinders: axes original +Y/-Y, X=+/-24, Z=+/-18, entrance R1.5 and inner R1.25; 48 x 36 pitch. M3 is inferred, verify thread and insertion depth.",
+    "rotation_z_deg": 180.0,
+    "mounting_face_z": 0.0,
+    "original_connector_outward_axis": "+X",
+    "connector_axis_point_source": [
+      39.44,
+      -11.6671,
+      0.0
+    ],
+    "connector_cylinder_radius": 5.1
   },
   "clamp": {
-    "center_x": 17.0,
-    "center_y": -50.0,
+    "center_x": -8.0,
+    "center_y": 0.0,
     "post_offset_y": 26.8,
     "post_depth_x": 12.0,
     "post_width_y": 8.0,
@@ -88,10 +108,16 @@
   },
   "material": "A6061-T6 for metal components; thin nonabrasive elastomer pad on TOP only",
   "unresolved": [
-    "Actual M3 and M4 thread specification and screw engagement",
+    "MID-360 thread specification, approved insertion depth and inverted installation guidance",
     "Camera housing allowable clamp pressure and friction retention",
-    "Host mount pattern and underside screw head clearance",
-    "Cable plugs, cable bend radii, full FOV and lidar shadow",
+    "Host mount pattern and fastener access",
+    "Mating cable plugs, bend radii, full FOV and lidar shadow",
     "Strength, stiffness, vibration and thermal validation"
-  ]
+  ],
+  "fastener_envelopes": {
+    "camera_post_head_diameter": 7.0,
+    "camera_post_head_height": 4.0,
+    "lidar_head_diameter": 5.5,
+    "lidar_head_height": 3.0
+  }
 }
