@@ -1,0 +1,9 @@
+item,quantity,material_or_spec,notes
+plate,1,A6061-T6 proposal,130x210x6 R8
+clamp post,2,A6061-T6 proposal,12x8x45.2; blind M4 taps top and bottom
+clamp cap,1,A6061-T6 proposal,12x61.6x4
+top pad,1,nonabrasive elastomer proposal,8x30; initial 0.3 compressed 0.2
+post lower screw,2,M4x10 proposal,verify 4mm engagement and head clearance
+cap upper screw,2,M4x8 proposal,verify 4mm engagement and clamp preload
+LiDAR screw,4,M3 inferred,manufacturer must confirm thread and length
+host fastener,4,M5 proposal,host dependent; preserve underside screw head space

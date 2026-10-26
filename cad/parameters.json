@@ -1,0 +1,97 @@
+{
+  "units": "mm",
+  "status": "REVIEW - based on supplied STEP; fastening and loads to be confirmed",
+  "plate": {
+    "length_x": 130.0,
+    "width_y": 210.0,
+    "thickness": 6.0,
+    "center_x": -20.0,
+    "corner_radius": 8.0,
+    "host_hole_diameter": 5.5,
+    "host_holes_xy": [
+      [
+        -73.0,
+        -93.0
+      ],
+      [
+        33.0,
+        -93.0
+      ],
+      [
+        -73.0,
+        93.0
+      ],
+      [
+        33.0,
+        93.0
+      ]
+    ]
+  },
+  "camera": {
+    "model": "TIER4-C2-176DEG",
+    "reference_file": "reference/c2_176.step",
+    "origin_xy": [
+      25.0,
+      -50.0
+    ],
+    "rotation_z_deg": -90.0,
+    "original_bottom_z": -22.5,
+    "original_optical_axis": "+Y",
+    "mounting": "Rear housing clamp, no bottom holes found in supplied model"
+  },
+  "lidar": {
+    "model": "Livox MID-360",
+    "reference_file": "reference/mid360.step",
+    "origin_xy": [
+      -20.0,
+      50.0
+    ],
+    "rotation_x_deg": 90.0,
+    "original_bottom_y": -25.9171,
+    "holes_local_xy": [
+      [
+        -24.0,
+        -18.0
+      ],
+      [
+        -24.0,
+        18.0
+      ],
+      [
+        24.0,
+        -18.0
+      ],
+      [
+        24.0,
+        18.0
+      ]
+    ],
+    "clearance_diameter": 3.4,
+    "hole_evidence": "STEP cylinders: axes original +Y/-Y, X=+/-24, Z=+/-18, entrance R1.5 and inner R1.25; 48 x 36 pitch. M3 is inferred, verify thread and insertion depth."
+  },
+  "clamp": {
+    "center_x": 17.0,
+    "center_y": -50.0,
+    "post_offset_y": 26.8,
+    "post_depth_x": 12.0,
+    "post_width_y": 8.0,
+    "post_height": 45.2,
+    "cap_thickness": 4.0,
+    "cap_depth_x": 12.0,
+    "clearance_diameter": 4.5,
+    "tap_drill_diameter": 3.3,
+    "tap_depth": 8.0,
+    "pad_width_y": 30.0,
+    "pad_depth_x": 8.0,
+    "pad_compressed_thickness": 0.2,
+    "pad_uncompressed_proposal": 0.3
+  },
+  "material": "A6061-T6 for metal components; thin nonabrasive elastomer pad on TOP only",
+  "unresolved": [
+    "Actual M3 and M4 thread specification and screw engagement",
+    "Camera housing allowable clamp pressure and friction retention",
+    "Host mount pattern and underside screw head clearance",
+    "Cable plugs, cable bend radii, full FOV and lidar shadow",
+    "Strength, stiffness, vibration and thermal validation"
+  ]
+}
