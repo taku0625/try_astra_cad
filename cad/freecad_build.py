@@ -27,7 +27,8 @@ camera_seat_z=camera_rotation.multVec(V(0,0,C['seating_plane_z_source'])).z
 cable_z=camera_rotation.multVec(V(0,0,C['rear_connector_z_source'])).z-camera_seat_z
 values = dict(BaseL=B['length_x'], BaseW=B['width_y'], BaseT=B['thickness'], BaseCX=B['center_x'], Radius=B['corner_radius'],
               CameraX=C['forward_offset'], CameraRear=C['rear_face_y_source'], BackT=R['thickness'], BackW=R['width'],
-              BackH=R['height_above_base'], MountPitch=C['rear_mount_pitch'], CableD=R['cable_diameter'],
+              BackH=R['height_above_base'], MountPitch=C['rear_mount_pitch'], CameraHoleD=R['camera_clearance_diameter'],
+              CableD=R['cable_diameter'], CableUp=R['cable_upward_extension'],
               CameraSeatZ=camera_seat_z, CableZ=cable_z, BraceW=R['brace_width'], BraceD=R['brace_depth'], BraceH=R['brace_height'])
 for i,(key,val) in enumerate(values.items(),1):
     S.set(f'A{i}',key);S.set(f'B{i}',f'={val} mm');S.setAlias(f'B{i}',key)
@@ -94,25 +95,32 @@ for i,(x,y) in enumerate([(x,y) for x in [-L['hole_pitch_x']/2,L['hole_pitch_x']
     holes.append(dict(type='LIDAR',xy=[x,y],diameter=L['clearance_diameter'],counterbore=L['counterbore_diameter'],depth=L['counterbore_depth']))
 # Rear camera fasteners: holes extracted from the source back-face loops.
 for i,(sy,sz) in enumerate([(-1,-1),(-1,1),(1,-1),(1,1)]):
-    tools.append(cyl(f'CameraRearHole{i}',R['camera_clearance_diameter']/2,'Parameters.BackT+2 mm',
+    tools.append(cyl(f'CameraRearHole{i}','Parameters.CameraHoleD/2','Parameters.BackT+2 mm',
                      'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',
                      f'{sy}*Parameters.MountPitch/2',f'Parameters.BaseT-Parameters.CameraSeatZ+{sz}*Parameters.MountPitch/2',
                      App.Rotation(V(0,0,1),V(1,0,0))))
-# Cable opening: full circular clearance plus a 45-degree teardrop roof for FDM.
+# Cable opening: a vertically extended circle with a 45-degree roof for FDM.
 # Extend to the rear edge: the low connector requires a 0.5 mm shallow base relief
 # so a nominal dia 16 plug can approach the opening horizontally from behind.
 cable=cyl('CableCircularClearance','Parameters.CableD/2',
           'Parameters.CameraX+Parameters.CameraRear-Parameters.BaseCX+Parameters.BaseL/2+2 mm',
           'Parameters.BaseCX-Parameters.BaseL/2-1 mm',0,'Parameters.BaseT+Parameters.CableZ',
           App.Rotation(V(0,0,1),V(1,0,0)))
+upper_cable=cyl('CableUpperClearance','Parameters.CableD/2','Parameters.BackT+2 mm',
+                'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',0,
+                'Parameters.BaseT+Parameters.CableZ+Parameters.CableUp',App.Rotation(V(0,0,1),V(1,0,0)))
+slot=box('CableVerticalExtension','Parameters.BackT+2 mm','Parameters.CableD','Parameters.CableUp',
+         'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm','-Parameters.CableD/2',
+         'Parameters.BaseT+Parameters.CableZ')
 diamond=primitive('Part::Prism','CableTeardropDiamond');diamond.Polygon=4
 expr(diamond,'Circumradius','Parameters.CableD/sqrt(2)');expr(diamond,'Height','Parameters.BackT+2 mm')
-place(diamond,'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',0,'Parameters.BaseT+Parameters.CableZ',App.Rotation(V(1,1,1),120))
+place(diamond,'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',0,
+      'Parameters.BaseT+Parameters.CableZ+Parameters.CableUp',App.Rotation(V(1,1,1),120))
 clip=box('CableRoofClip','Parameters.BackT+2 mm','2*Parameters.CableD','Parameters.CableD',
          'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm','-Parameters.CableD',
-         'Parameters.BaseT+Parameters.CableZ+Parameters.CableD/(2*sqrt(2))')
+         'Parameters.BaseT+Parameters.CableZ+Parameters.CableUp+Parameters.CableD/(2*sqrt(2))')
 roof=primitive('Part::Common','CableTeardropRoof');roof.Base=diamond;roof.Tool=clip;roof.Refine=True
-tools.extend([cable,roof])
+tools.extend([cable,upper_cable,slot,roof])
 cutters=fuse('ClearanceOpenings',tools)
 fixture=primitive('Part::Cut','PrintableFixture');fixture.Base=stock;fixture.Tool=cutters;fixture.Refine=True
 fixture.Label='ONE PRINTED PART - PLA'
@@ -160,7 +168,15 @@ assert connector.z<refs['camera'].Placement.Base.z, 'Rear connector must be belo
 rear_start=B['center_x']-B['length_x']/2-1
 plug_probe=Part.makeCylinder(R['cable_diameter']/2-0.02,connector.x-rear_start+0.1,
                              V(rear_start,connector.y,connector.z),V(1,0,0))
-assert shape.common(plug_probe).Volume<1e-5, 'Cable approach blocked by base or rear plate'
+# Probe the whole upward extension, including the formerly obstructing upper lip.
+upper_probe=plug_probe.copy();upper_probe.translate(V(0,0,R['cable_upward_extension']))
+bridge_probe=Part.makeBox(connector.x-rear_start+0.1,R['cable_diameter']-0.04,R['cable_upward_extension'],
+                          V(rear_start,-R['cable_diameter']/2+0.02,connector.z))
+plug_envelope=plug_probe.fuse(upper_probe).fuse(bridge_probe)
+assert shape.common(plug_envelope).Volume<1e-5, 'Extended cable approach blocked by base or rear plate'
+assert C['screw_diameter']<R['camera_clearance_diameter']<C['assumed_screw_head_diameter']
+screw_insertion=C['screw_length_under_head']-R['thickness']
+assert 0<screw_insertion<C['rear_hole_axis_first_obstruction_mm'], 'Nominal screw exceeds STEP axial opening'
 # Inspect the supplied camera back-face loops, rather than guessing a thread pattern.
 source=Part.read(str(ROOT/'cad'/C['reference_file']))
 rear_holes=[]
@@ -185,6 +201,14 @@ for x,z in rear_holes:
     # Rear screwdriver/head access is kept clear of the two rear gussets.
     approach=Part.makeCylinder(2.75,40,V(pt.x-R['thickness']-40,pt.y,pt.z),V(1,0,0))
     assert shape.common(approach).Volume<1e-5
+    # A complete bearing annulus for an assumed dia 3.0 M1.6 head remains around
+    # each small through-hole, even beside the enlarged cable opening.
+    head_base=V(pt.x-R['thickness'],pt.y,pt.z)
+    bearing=Part.makeCylinder(C['assumed_screw_head_diameter']/2,0.2,head_base,V(1,0,0)).cut(
+        Part.makeCylinder(R['camera_clearance_diameter']/2,0.2,head_base,V(1,0,0)))
+    assert abs(shape.common(bearing).Volume-bearing.Volume)<1e-5, 'Incomplete screw head bearing surface'
+    shaft=Part.makeCylinder(C['screw_diameter']/2,C['screw_length_under_head'],head_base,V(1,0,0))
+    assert shape.common(shaft).Volume<1e-5, 'Nominal 8 mm screw shaft blocked by fixture'
 # Exact camera underside planes are supported on the base top, minus bolt openings.
 full_foot_area=0.;supported_area=0.
 for face in refs['camera'].Shape.Faces:
@@ -227,7 +251,14 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
         'camera_connector_center_global_mm':list(connector),
         'cable_opening_height_above_base_mm':cable_z,
         'cable_base_relief_depth_mm':max(0,R['cable_diameter']/2-cable_z),
-        'cable_approach':'PASS - nominal dia 16 clearance from rear base edge through rear plate',
+        'cable_upward_extension_mm':R['cable_upward_extension'],
+        'cable_opening_top_z_mm':connector.z+R['cable_upward_extension']+R['cable_diameter']/math.sqrt(2),
+        'cable_approach':'PASS - nominal dia 16 profile swept upward 6 mm, clear from rear edge through plate; actual plug not supplied',
+        'camera_fastener':dict(diameter_mm=C['screw_diameter'],spec_source=C['screw_spec_source'],hole_diameter_mm=R['camera_clearance_diameter'],
+                               length_under_head_mm=C['screw_length_under_head'],through_length_mm=R['thickness'],
+                               insertion_without_washer_mm=screw_insertion,assumed_head_diameter_mm=C['assumed_screw_head_diameter'],
+                               head_bearing='PASS - full assumed dia 3.0 head annulus at all four holes',
+                               actual_insertion_limit_verified=False),
         'camera_assembly_approach':'PASS - exact sensor at 8 approach offsets along X; final rear contact and cable clearance',
         'camera_back_hole_centers_global':rear_global,'camera_foot_area_mm2':full_foot_area,
         'camera_supported_area_mm2':supported_area,'camera_support_fraction':supported_area/full_foot_area,

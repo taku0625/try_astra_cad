@@ -36,7 +36,7 @@ def render(p,r,meshes):
     cx=c['forward_offset'];t=b['thickness'];back=cx+c['rear_face_y_source']
     f=plt.figure(figsize=(15,10),facecolor='white')
     f.suptitle('FreeCAD | Rear screw bracket + camera support base',x=.05,ha='left',fontsize=21,weight='bold')
-    f.text(.05,.927,'CAMERA ROLL CORRECTED 180 DEG / REAR CONNECTOR LOW / ONE PLA PRINT',fontsize=11,color='#286678')
+    f.text(.05,.927,f"CABLE OPENING +{k['cable_upward_extension']:g} mm UP / CAMERA HOLES DIA {k['camera_clearance_diameter']:g} x {k['thickness']:g} mm / ONE PLA PRINT",fontsize=11,color='#286678')
     ax=f.add_subplot(121,projection='3d')
     add_meshes(ax,meshes,['fixture','camera','lidar'])
     ax.set(xlim=(-65,65),ylim=(-60,60),zlim=(-70,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
@@ -46,7 +46,7 @@ def render(p,r,meshes):
     add_meshes(ax,meshes,['fixture'])
     ax.set(xlim=(-60,35),ylim=(-55,55),zlim=(0,68),xlabel='X',ylabel='Y',zlabel='Z')
     ax.set_box_aspect((95,110,68));ax.view_init(elev=22,azim=155)
-    ax.set_title('Rear view | 4 screw holes + teardrop cable opening',fontsize=10.5)
+    ax.set_title('Rear view | smaller screw holes + taller cable opening',fontsize=10.5)
     ax=f.add_subplot(224)
     plane=r['fov']['pupil_lower_bound_x'];front=r['fov']['fixture_max_x']
     ax.axvspan(plane,75,facecolor='#dceee2',alpha=.75)
@@ -82,11 +82,12 @@ def render(p,r,meshes):
           'Camera roll: 180 deg about forward +X; source +Z points DOWN; rear connector below lens.',
           'MID-360 datum XY=(0,0), mounting face Z=0, scan downward -Z. Both cables exit -X.','',
           'CAMERA REAR ATTACHMENT:',
-          ' 4 x dia 3.6 THRU along X at Y=+/-12.5, Z=18 and 43 (25 x 25 pitch).',
+          f" 4 x dia {k['camera_clearance_diameter']:g} THRU, length {k['thickness']:g}, along X; Y=+/-12.5, Z=18/43 (25 x 25 pitch).",
           ' Source STEP rear face Y=-16.4: four entry loops diameter 2.57 at X/Z=+/-12.5.',
-          ' M3 thread inferred; axial solid begins 7 mm inside source holes. Verify actual specification.',
-          ' M3x10 through 6 mm rear plate gives 4 mm insertion WITHOUT washers (conditional).',
-          f" Cable opening Y=0, Z={r['camera_connector_center_global_mm'][2]:g}: dia 16 + 45-degree teardrop roof.",
+          ' M1.6 confirmed by user; STEP entry diameter is not a thread specification. Check insertion limit.',
+          f" M{c['screw_diameter']:g}x{c['screw_length_under_head']:g} (head excluded) through {k['thickness']:g} plate: {r['camera_fastener']['insertion_without_washer_mm']:g} insertion, no washer.",
+          f" Cable opening: dia {k['cable_diameter']:g} at Y=0, Z={r['camera_connector_center_global_mm'][2]:g}, extended UP {k['cable_upward_extension']:g} with 45-degree roof.",
+          f" Cable opening top Z={r['cable_opening_top_z_mm']:.2f}; nominal plug envelope checked, actual plug not supplied.",
           f" Base relief below cable: {r['cable_base_relief_depth_mm']:g} deep, extends to rear edge for plug approach.",
           ' Two rear-only gussets: 5 mm wide, 16 mm deep, 26 mm high, with 1 mm root overlaps.','',
           'BASE HOLES:']

@@ -41,6 +41,10 @@
     "rear_mount_pitch": 25.0,
     "rear_hole_entry_diameter_model": 2.57,
     "rear_hole_axis_first_obstruction_mm": 7.0,
+    "screw_diameter": 1.6,
+    "screw_spec_source": "User confirms M1.6, approximately 8 mm long excluding head",
+    "assumed_screw_head_diameter": 3.0,
+    "screw_length_under_head": 8.0,
     "minimum_rear_margin": 3.0
   },
   "lidar": {
@@ -68,16 +72,17 @@
   "unresolved": [
     "Exact entrance pupil and vertical/diagonal FOV; confirm actual full-frame image",
     "PLA heating/creep, load and vibration under operating conditions",
-    "Camera rear thread specification and screw insertion limit; STEP provides geometry only",
+    "Camera M1.6 confirmed by user; manufacturer insertion limit and actual screw head dimensions still unverified",
     "MID-360 thread, insertion limit and inverted operation",
     "Mating cable plug dimensions/bends and host support"
   ],
   "rear_bracket": {
-    "thickness": 6.0,
+    "thickness": 4.0,
     "width": 55.0,
     "height_above_base": 54.0,
-    "camera_clearance_diameter": 3.6,
+    "camera_clearance_diameter": 1.8,
     "cable_diameter": 16.0,
+    "cable_upward_extension": 6.0,
     "brace_width": 5.0,
     "brace_depth": 16.0,
     "brace_height": 26.0,

@@ -1,5 +1,5 @@
 item,quantity,material_or_spec,notes
-printed fixture,1,PLA,86x100x62; integral support base and rear bracket; teardrop cable opening
-camera rear screw,4,M3x10 conditional,25x25 pattern; 6mm plate gives 4mm insertion without washer; confirm actual thread/depth
+printed fixture,1,PLA,86x100x62; 4mm rear plate; cable opening extended upward 6mm with 45deg roof
+camera rear screw,4,M1.6x8 user specified,25x25 pattern; dia1.8 holes through 4mm plate; 8mm excludes head; 4mm insertion without washer; confirm insertion limit and head size
 LiDAR screw,4,M3x8 conditional,head clearance dia6.8 depth3.5; insertion3.5; confirm actual thread/depth
 host fastener,4,M5 proposal,host-dependent length; host must clear LiDAR and rear cables

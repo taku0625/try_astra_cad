@@ -5,7 +5,7 @@
   "fixture_valid_solid": true,
   "stl_closed_manifold": true,
   "stl_connected_components": 1,
-  "stl_facets": 5096,
+  "stl_facets": 5104,
   "fixture_bounds_mm": {
     "x": [
       -55.0,
@@ -42,7 +42,20 @@
   ],
   "cable_opening_height_above_base_mm": 7.5,
   "cable_base_relief_depth_mm": 0.5,
-  "cable_approach": "PASS - nominal dia 16 clearance from rear base edge through rear plate",
+  "cable_upward_extension_mm": 6.0,
+  "cable_opening_top_z_mm": 32.81370849898476,
+  "cable_approach": "PASS - nominal dia 16 profile swept upward 6 mm, clear from rear edge through plate; actual plug not supplied",
+  "camera_fastener": {
+    "diameter_mm": 1.6,
+    "spec_source": "User confirms M1.6, approximately 8 mm long excluding head",
+    "hole_diameter_mm": 1.8,
+    "length_under_head_mm": 8.0,
+    "through_length_mm": 4.0,
+    "insertion_without_washer_mm": 4.0,
+    "assumed_head_diameter_mm": 3.0,
+    "head_bearing": "PASS - full assumed dia 3.0 head annulus at all four holes",
+    "actual_insertion_limit_verified": false
+  },
   "camera_assembly_approach": "PASS - exact sensor at 8 approach offsets along X; final rear contact and cable clearance",
   "camera_back_hole_centers_global": [
     [
@@ -101,8 +114,8 @@
     "entrance_pupil_verified": false,
     "result": "PASS for assumed forward hemisphere; verify actual image and full calibrated FOV"
   },
-  "fixture_volume_mm3": 84716.56069715804,
-  "pla_solid_mass_g_at_1_24": 105.04853526447597,
+  "fixture_volume_mm3": 79021.99311476016,
+  "pla_solid_mass_g_at_1_24": 97.9872714623026,
   "holes": [
     {
       "type": "HOST",
@@ -193,7 +206,7 @@
   "unresolved": [
     "Exact entrance pupil and vertical/diagonal FOV; confirm actual full-frame image",
     "PLA heating/creep, load and vibration under operating conditions",
-    "Camera rear thread specification and screw insertion limit; STEP provides geometry only",
+    "Camera M1.6 confirmed by user; manufacturer insertion limit and actual screw head dimensions still unverified",
     "MID-360 thread, insertion limit and inverted operation",
     "Mating cable plug dimensions/bends and host support"
   ],
@@ -201,8 +214,8 @@
     "camera": "220a4cd902959a2154054680a6834b6826a77bc83f53de7b971f4fc7a09b23d2",
     "lidar": "b93e9b51282ed319b6aa755e76a132c0eb03306da5f3b9676bcabf2e2ae25f02"
   },
-  "parameters_sha256": "3087307cf08b8444b628fe971b4bda0ade5818fd970470be513bf9ca0e8e2f80",
-  "model_script_sha256": "89a426f62cb3b54a41c4a579b0d5216d371009c4a369169ea0eaf81e08ebdae7",
+  "parameters_sha256": "5edec8f1b1d80fa5b486d725ade4c9cdc21a0eb1622f78d36d7fc9cf845d4f81",
+  "model_script_sha256": "1ca8a21ec85367e58e7d37fcffe6d65de52d1e77fb469a4829051ef3ddbabf5e",
   "STL_roundtrip": "PASS - reimported closed manifold, one connected component",
   "FCStd_reopen_parameter_edit": "PASS - reopen, change back plate thickness +1 mm, recompute, restore",
   "STEP_roundtrip": "PASS - valid single solid, volume preserved"
