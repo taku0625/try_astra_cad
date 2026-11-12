@@ -19,7 +19,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'output'
-COLORS={'fixture':'#628ca5','camera':'#d6a04c','lidar':'#409b98'}
+COLORS={'fixture':'#628ca5','camera':'#d6a04c','lidar':'#409b98','collar':'#999999','pipe':'#303840'}
 
 
 def add_meshes(ax,meshes,keys):
@@ -35,18 +35,18 @@ def render(p,r,meshes):
     b,c,k=p['plate'],p['camera'],p['rear_bracket']
     cx=c['forward_offset'];t=b['thickness'];back=cx+c['rear_face_y_source']
     f=plt.figure(figsize=(15,10),facecolor='white')
-    f.suptitle('FreeCAD | Rear screw bracket + camera support base',x=.05,ha='left',fontsize=21,weight='bold')
-    f.text(.05,.927,f"CABLE OPENING +{k['cable_upward_extension']:g} mm UP / CAMERA HOLES DIA {k['camera_clearance_diameter']:g} x {k['thickness']:g} mm / ONE PLA PRINT",fontsize=11,color='#286678')
+    f.suptitle('FreeCAD | PROVISIONAL vertical pipe mount',x=.05,ha='left',fontsize=21,weight='bold')
+    f.text(.05,.927,'25 mm PIPE ASSUMED / ONE COLLAR / PRODUCT MOUNTING DIMENSIONS UNVERIFIED',fontsize=11,color='#286678')
     ax=f.add_subplot(121,projection='3d')
-    add_meshes(ax,meshes,['fixture','camera','lidar'])
-    ax.set(xlim=(-65,65),ylim=(-60,60),zlim=(-70,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
-    ax.set_box_aspect((130,120,140));ax.view_init(elev=20,azim=35)
+    add_meshes(ax,meshes,['fixture','camera','lidar','collar','pipe'])
+    ax.set(xlim=(-120,65),ylim=(-60,60),zlim=(-125,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
+    ax.set_box_aspect((185,120,195));ax.view_init(elev=20,azim=35)
     ax.set_title('Camera above, inverted MID-360 below',fontsize=11)
     ax=f.add_subplot(222,projection='3d')
     add_meshes(ax,meshes,['fixture'])
-    ax.set(xlim=(-60,35),ylim=(-55,55),zlim=(0,68),xlabel='X',ylabel='Y',zlabel='Z')
-    ax.set_box_aspect((95,110,68));ax.view_init(elev=22,azim=155)
-    ax.set_title('Rear view | smaller screw holes + taller cable opening',fontsize=10.5)
+    ax.set(xlim=(-120,35),ylim=(-55,55),zlim=(-10,68),xlabel='X',ylabel='Y',zlabel='Z')
+    ax.set_box_aspect((155,110,78));ax.view_init(elev=22,azim=155)
+    ax.set_title('Rear mount | pipe clearance + adjustable collar slots',fontsize=10.5)
     ax=f.add_subplot(224)
     plane=r['fov']['pupil_lower_bound_x'];front=r['fov']['fixture_max_x']
     ax.axvspan(plane,75,facecolor='#dceee2',alpha=.75)
@@ -57,13 +57,17 @@ def render(p,r,meshes):
     ax.add_patch(Rectangle((cx-28.3,r['camera_connector_center_global_mm'][2]-3.75),11.9,7.5,facecolor=COLORS['camera']))
     ax.annotate('Rear connector LOW',xy=(cx-24,r['camera_connector_center_global_mm'][2]),
                 xytext=(-58,68),fontsize=8,color='#8c672c',arrowprops=dict(arrowstyle='->',color='#8c672c'))
+    m=p['pipe_mount']
+    ax.add_patch(Rectangle((m['pad_rear_x'],m['pad_bottom_z']),m['pad_front_x']-m['pad_rear_x'],m['pad_top_z']-m['pad_bottom_z'],color=COLORS['fixture']))
+    ax.add_patch(Rectangle((m['center_x']-m['collar_od_reference']/2,m['pad_bottom_z']-m['collar_height_reference']),m['collar_od_reference'],m['collar_height_reference'],color=COLORS['collar']))
+    ax.add_patch(Rectangle((m['center_x']-m['pipe_od']/2,-42),m['pipe_od'],42,color=COLORS['pipe']))
     ax.axvline(plane,color='#38784c',ls='--',lw=1.3)
     ax.text(plane+3,66,'Forward rays',color='#38784c',fontsize=9)
     ax.annotate('',xy=(plane,-8),xytext=(front,-8),arrowprops=dict(arrowstyle='<->',color='#38784c'))
     ax.text((plane+front)/2,-18,f"{r['fov']['clearance_behind_plane_mm']:.1f} mm",ha='center',fontsize=9,color='#38784c')
     ax.text(-53,-31,'Dashed plane = assumed pupil lower bound\nActual pupil / full FOV need image verification',fontsize=8,color='#5c6871')
     ax.annotate('+X',xy=(70,30.5),xytext=(58,30.5),fontsize=9,arrowprops=dict(arrowstyle='->'))
-    ax.set(xlim=(-65,75),ylim=(-42,77),title='SIDE | base supports camera (schematic)')
+    ax.set(xlim=(-120,75),ylim=(-42,77),title='SIDE | base supports camera (schematic)')
     ax.set_aspect('equal');ax.axis('off')
     f.text(.05,.074,f"Camera underside contact: {r['camera_supported_area_mm2']:.1f} / {r['camera_foot_area_mm2']:.1f} mm2 ({100*r['camera_support_fraction']:.1f}%)",fontsize=10.5)
     f.text(.05,.045,'Single PLA part + commercial screws. Confirm thread depth, mating plug, actual image and operating temperature.',fontsize=9,color='#a04428')
@@ -73,7 +77,7 @@ def render(p,r,meshes):
         pdf.savefig(f)
         f2,ax=plt.subplots(figsize=(11.7,8.3));ax.axis('off')
         lines=[
-          'ONE-PIECE REAR BRACKET | Dimensions and assembly (mm)','',
+          'ONE-PIECE REAR BRACKET + PROVISIONAL PIPE MOUNT (mm)','',
           'FreeCAD native tree and editable Parameters spreadsheet. STL contains fixture only.',
           f"Base: {b['length_x']:g} x {b['width_y']:g} x {t:g}, center ({b['center_x']:g},0), R{b['corner_radius']:g}; front X={front:g}.",
           f"Rear plate: {k['thickness']:g} thick x {k['width']:g} wide x {k['height_above_base']:g} above base; Z top={t+k['height_above_base']:g}.",
@@ -96,9 +100,9 @@ def render(p,r,meshes):
             if 'counterbore' in h:line+=f"; TOP counterbore dia {h['counterbore']:g} x {h['depth']:g} deep"
             lines.append(line)
         lines += ['',
-          'PRINT: PLA; base underside on bed; 0.4 nozzle, 0.2 layers, 5 walls, 6 top/bottom layers.',
+          'PRINT: PLA; rear pad extends below base; re-evaluate orientation and underside supports.',
           ' 40% gyroid and 5 mm brim are starting values. Inspect overhangs/bridges in slicer.',
-          ' Start with supports off: cable opening has a 45-degree roof, horizontal screw holes are small.',
+          ' Support-free base-down printing is NOT validated for the new stepped underside.',
           ' Temperature/speed follow filament and printer profiles. Deburr holes and contact faces.','',
           'ASSEMBLY:',
           '1. Attach inverted LiDAR to base with 4 screws. M3x8 implies 3.5 mm insertion: verify limit.',
@@ -112,6 +116,32 @@ def render(p,r,meshes):
           f"Solid PLA mass at 1.24 g/cm3: {r['pla_solid_mass_g_at_1_24']:.1f} g; actual print includes infill/support effects."]
         ax.text(.01,.98,'\n'.join(lines),va='top',family='monospace',fontsize=8.1,linespacing=1.18)
         pdf.savefig(f2);plt.close(f2)
+        f3,ax=plt.subplots(figsize=(11.7,8.3));ax.axis('off')
+        m=p['pipe_mount']
+        notes=[
+            'PROVISIONAL SCS2512CN2 / VERTICAL CARBON PIPE MOUNT',
+            'NOT A VERIFIED PRODUCT INTERFACE - CHECK MANUFACTURER DRAWING BEFORE PRINTING',
+            '',
+            f"Pipe axis: Z; center X={m['center_x']:g}, Y={m['center_y']:g} mm; assumed OD {m['pipe_od']:g} mm.",
+            'Pipe top must stay at or below Z=0 to keep the rear cable path clear.',
+            'Pipe wall thickness in the assembly is a visualization assumption only.',
+            f"Rear pad: X={m['pad_rear_x']:g}..{m['pad_front_x']:g}, Y=+/-{m['pad_width']/2:g}, Z={m['pad_bottom_z']:g}..{m['pad_top_z']:g} mm.",
+            'Pipe clearance hole: 25.6 mm. Two radial slots along Y, width 5.5 mm.',
+            'Opposed bolt-center pitch adjusts from 34 to 40 mm; nominal M5 shaft clearance.',
+            'Collar is BELOW the pad. Bolts enter from ABOVE; use suitable washers.',
+            'Collar reference envelope: OD45 x H12 with bore25; NOT verified SCS2512CN2 CAD.',
+            'Confirm that the real collar has matching AXIAL mounting holes and insertion depth.',
+            'Do not use the slit-clamping screw as a fixture attachment screw.',
+            'Choose bolt size and length only after checking collar threads and washer thickness.',
+            'Check clamp screw/tool access with the actual collar; simplified envelope has no clamp screw.',
+            'Check pipe crushing, single-collar slip/rotation and rear cantilever strength with actual hardware.',
+            '',
+            'Assembly: bolt collar under pad, insert pipe from below to Z<=0, then tighten to manufacturer limits.',
+            'Printed object is PrintableFixture only; collar and pipe are bought-part references.',
+            'CAD checks: one solid; STL/STEP roundtrip; no sensor/envelope collisions; slot/tool access.',
+        ]
+        ax.text(.02,.96,'\n'.join(notes),va='top',family='monospace',fontsize=10,linespacing=1.5)
+        pdf.savefig(f3);plt.close(f3)
     plt.close(f)
 
 

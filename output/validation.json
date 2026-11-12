@@ -1,14 +1,14 @@
 {
   "engine": "FreeCAD 1.0.0",
-  "status": "PLA prototype - one-piece rear screw bracket; verify threads, optics and operating temperature",
+  "status": "PROVISIONAL carbon-pipe mount; confirm collar drawing and pipe dimensions before fabrication",
   "printed_part_count": 1,
   "fixture_valid_solid": true,
   "stl_closed_manifold": true,
   "stl_connected_components": 1,
-  "stl_facets": 5104,
+  "stl_facets": 5996,
   "fixture_bounds_mm": {
     "x": [
-      -55.0,
+      -114.0,
       31.0
     ],
     "y": [
@@ -16,7 +16,7 @@
       50.0
     ],
     "z": [
-      0.0,
+      -8.0,
       62.0
     ]
   },
@@ -114,8 +114,8 @@
     "entrance_pupil_verified": false,
     "result": "PASS for assumed forward hemisphere; verify actual image and full calibrated FOV"
   },
-  "fixture_volume_mm3": 79021.99311476016,
-  "pla_solid_mass_g_at_1_24": 97.9872714623026,
+  "fixture_volume_mm3": 111764.87695151292,
+  "pla_solid_mass_g_at_1_24": 138.58844741987602,
   "holes": [
     {
       "type": "HOST",
@@ -199,8 +199,8 @@
     "top_bottom_layers": 6,
     "infill_percent": 40,
     "infill_pattern": "gyroid",
-    "orientation": "Plate underside Z=0 on bed",
-    "supports": "Start with supports off: cable opening has 45-degree teardrop top; inspect small horizontal screw-hole bridges in slicer",
+    "orientation": "Reassess in slicer: rear pad extends to Z=-8; old base-down support-free orientation no longer applies",
+    "supports": "Reassess supports for stepped underside; not validated for printing",
     "brim_mm": 5
   },
   "unresolved": [
@@ -208,14 +208,44 @@
     "PLA heating/creep, load and vibration under operating conditions",
     "Camera M1.6 confirmed by user; manufacturer insertion limit and actual screw head dimensions still unverified",
     "MID-360 thread, insertion limit and inverted operation",
-    "Mating cable plug dimensions/bends and host support"
+    "Mating cable plug dimensions/bends and host support",
+    "Pipe OD assumed 25 mm; confirm actual OD and wall thickness",
+    "SCS2512CN2 collar dimensions, axial mounting holes, fastener size/depth and clamping torque unverified; reference envelope is not manufacturer CAD",
+    "Rear cantilever strength and single-collar resistance to rotation/slip unverified"
   ],
   "source_sha256": {
     "camera": "220a4cd902959a2154054680a6834b6826a77bc83f53de7b971f4fc7a09b23d2",
     "lidar": "b93e9b51282ed319b6aa755e76a132c0eb03306da5f3b9676bcabf2e2ae25f02"
   },
-  "parameters_sha256": "5edec8f1b1d80fa5b486d725ade4c9cdc21a0eb1622f78d36d7fc9cf845d4f81",
-  "model_script_sha256": "1ca8a21ec85367e58e7d37fcffe6d65de52d1e77fb469a4829051ef3ddbabf5e",
+  "pipe_mount": {
+    "status": "PROVISIONAL: SCS2512CN2 mounting dimensions and pipe OD are unverified",
+    "product": "SCS2512CN2",
+    "quantity": 1,
+    "pipe_od": 25.0,
+    "pipe_id_reference": 21.0,
+    "pipe_top_z": 0.0,
+    "pipe_length_reference": 120.0,
+    "center_x": -85.0,
+    "center_y": 0.0,
+    "pad_rear_x": -114.0,
+    "pad_front_x": -42.0,
+    "pad_width": 60.0,
+    "pad_bottom_z": -8.0,
+    "pad_top_z": 1.0,
+    "slot_pitch_min": 34.0,
+    "slot_pitch_max": 40.0,
+    "slot_width": 5.5,
+    "collar_od_reference": 45.0,
+    "collar_height_reference": 12.0,
+    "reference_url": "https://jp.misumi-ec.com/vona2/detail/221004989375/?HissuCode=SCS2512CN2",
+    "mounting_dimensions_verified": false,
+    "pipe_od_verified": false,
+    "reference_collision_check": "PASS - provisional envelopes only",
+    "slot_and_tool_access": "PASS - M5 shaft at pitch 34 and 40 mm",
+    "minimum_slot_pipe_ligament_mm": 1.4499999999999993
+  },
+  "parameters_sha256": "820e0c065dc40cbf5371c5e0c7ce79de5f4928fd4a7ef6dde1429996825a4fe5",
+  "model_script_sha256": "f66208ecc0d1496ba6ffa1b7cb7e1b4625ebb2fccdbc7a3c93802339b5fb80bf",
   "STL_roundtrip": "PASS - reimported closed manifold, one connected component",
   "FCStd_reopen_parameter_edit": "PASS - reopen, change back plate thickness +1 mm, recompute, restore",
   "STEP_roundtrip": "PASS - valid single solid, volume preserved"
