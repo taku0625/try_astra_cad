@@ -1,0 +1,42 @@
+{
+  "design_commit": "7ccf8bb5a54cde5dc0be990220cc1d827df909db",
+  "size_mm": [
+    145.0,
+    100.0,
+    62.0
+  ],
+  "bounds_mm": {
+    "min": [
+      -114.0,
+      -50.0,
+      0.0
+    ],
+    "max": [
+      31.0,
+      50.0,
+      62.0
+    ]
+  },
+  "triangles": 6004,
+  "pipe_axis_vertical_intersections_z": [],
+  "base_sample_vertical_intersections_z": [
+    0.0,
+    8.0
+  ],
+  "step_solids": 1,
+  "stl_connected_components": 1,
+  "checksums": {
+    "fixture_integrated_7ccf8bb.step": {
+      "bytes": 83635,
+      "sha256": "8c181b8346795e91d025860a19ab7ddffb61eba2dba62ed31ce8431d232b7991"
+    },
+    "fixture_integrated_7ccf8bb.stl": {
+      "bytes": 300284,
+      "sha256": "af79bd632d41f5cb2885b27702bb18c326f9a35b6b4075c857e58c512336a4be"
+    },
+    "stl_import_preview.png": {
+      "bytes": 314630,
+      "sha256": "2fd8527c344ce9f83eb43fc59251f49c2061d247c03a091676733b323e88a3a5"
+    }
+  }
+}

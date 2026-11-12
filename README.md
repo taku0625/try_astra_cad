@@ -1,5 +1,7 @@
 # 縦カーボンパイプ固定・台座一体型（カラー取付寸法は暫定）
 
+Bambu Studio向けの確認済みファイル：**[版名付きSTL](output/print_7ccf8bb/fixture_integrated_7ccf8bb.stl)** ／ **[版名付きSTEP](output/print_7ccf8bb/fixture_integrated_7ccf8bb.step)** ／ **[確認画像](output/print_7ccf8bb/stl_import_preview.png)** ／ **[一括ZIP](fixture_integrated_7ccf8bb.zip)**。形状版7ccf8bbの固定セットで、寸法は145×100×62 mmです。[読み込み確認の詳細](output/print_7ccf8bb/README.md)を参照してください。
+
 **パイプ固定部とセンサー台座を、段差のない一枚の台座として作り直しました。SCS2512CN2を1個使う想定です。製品図面とパイプ実寸は未確認です。この版は寸法確認・配置レビュー用で、製品への適合や保持強度は未検証です。**
 
 - パイプ：Z方向、外径25 mmを仮定。中心はX=-85、Y=0 mm。上端はZ=0以下に置き、後方ケーブル経路を確保します。
