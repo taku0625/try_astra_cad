@@ -5,7 +5,7 @@
   "fixture_valid_solid": true,
   "stl_closed_manifold": true,
   "stl_connected_components": 1,
-  "stl_facets": 5996,
+  "stl_facets": 6004,
   "fixture_bounds_mm": {
     "x": [
       -114.0,
@@ -16,7 +16,7 @@
       50.0
     ],
     "z": [
-      -8.0,
+      0.0,
       62.0
     ]
   },
@@ -114,8 +114,8 @@
     "entrance_pupil_verified": false,
     "result": "PASS for assumed forward hemisphere; verify actual image and full calibrated FOV"
   },
-  "fixture_volume_mm3": 111764.87695151292,
-  "pla_solid_mass_g_at_1_24": 138.58844741987602,
+  "fixture_volume_mm3": 121397.49707269388,
+  "pla_solid_mass_g_at_1_24": 150.5328963701404,
   "holes": [
     {
       "type": "HOST",
@@ -199,8 +199,8 @@
     "top_bottom_layers": 6,
     "infill_percent": 40,
     "infill_pattern": "gyroid",
-    "orientation": "Reassess in slicer: rear pad extends to Z=-8; old base-down support-free orientation no longer applies",
-    "supports": "Reassess supports for stepped underside; not validated for printing",
+    "orientation": "Continuous base underside Z=0 on bed; print fixture only",
+    "supports": "Start with supports off; inspect small horizontal screw holes and 45-degree cable roof in slicer",
     "brim_mm": 5
   },
   "unresolved": [
@@ -227,25 +227,22 @@
     "pipe_length_reference": 120.0,
     "center_x": -85.0,
     "center_y": 0.0,
-    "pad_rear_x": -114.0,
-    "pad_front_x": -42.0,
-    "pad_width": 60.0,
-    "pad_bottom_z": -8.0,
-    "pad_top_z": 1.0,
     "slot_pitch_min": 34.0,
     "slot_pitch_max": 40.0,
     "slot_width": 5.5,
     "collar_od_reference": 45.0,
     "collar_height_reference": 12.0,
     "reference_url": "https://jp.misumi-ec.com/vona2/detail/221004989375/?HissuCode=SCS2512CN2",
+    "construction": "Integrated in the continuous 8 mm base; flat underside Z=0",
     "mounting_dimensions_verified": false,
     "pipe_od_verified": false,
     "reference_collision_check": "PASS - provisional envelopes only",
     "slot_and_tool_access": "PASS - M5 shaft at pitch 34 and 40 mm",
     "minimum_slot_pipe_ligament_mm": 1.4499999999999993
   },
-  "parameters_sha256": "820e0c065dc40cbf5371c5e0c7ce79de5f4928fd4a7ef6dde1429996825a4fe5",
-  "model_script_sha256": "f66208ecc0d1496ba6ffa1b7cb7e1b4625ebb2fccdbc7a3c93802339b5fb80bf",
+  "integrated_base": "PASS - single solid, flat underside Z=0, full-thickness bridge across former joint",
+  "parameters_sha256": "4ce977f12b07e016426136aba380be9f0993b861702af505a0778c0b5ff6e6ac",
+  "model_script_sha256": "aa1fa24f952b277a8f7fa7642c9b99cb974f4b958700ebce617a4abafda69fb1",
   "STL_roundtrip": "PASS - reimported closed manifold, one connected component",
   "FCStd_reopen_parameter_edit": "PASS - reopen, change back plate thickness +1 mm, recompute, restore",
   "STEP_roundtrip": "PASS - valid single solid, volume preserved"

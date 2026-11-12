@@ -2,10 +2,10 @@
   "units": "mm",
   "status": "PROVISIONAL carbon-pipe mount; confirm collar drawing and pipe dimensions before fabrication",
   "plate": {
-    "length_x": 86.0,
+    "length_x": 145.0,
     "width_y": 100.0,
     "thickness": 8.0,
-    "center_x": -12.0,
+    "center_x": -41.5,
     "corner_radius": 8.0,
     "host_holes_xy": [
       [
@@ -65,8 +65,8 @@
     "top_bottom_layers": 6,
     "infill_percent": 40,
     "infill_pattern": "gyroid",
-    "orientation": "Reassess in slicer: rear pad extends to Z=-8; old base-down support-free orientation no longer applies",
-    "supports": "Reassess supports for stepped underside; not validated for printing",
+    "orientation": "Continuous base underside Z=0 on bed; print fixture only",
+    "supports": "Start with supports off; inspect small horizontal screw holes and 45-degree cable roof in slicer",
     "brim_mm": 5
   },
   "unresolved": [
@@ -102,16 +102,12 @@
     "pipe_length_reference": 120.0,
     "center_x": -85.0,
     "center_y": 0.0,
-    "pad_rear_x": -114.0,
-    "pad_front_x": -42.0,
-    "pad_width": 60.0,
-    "pad_bottom_z": -8.0,
-    "pad_top_z": 1.0,
     "slot_pitch_min": 34.0,
     "slot_pitch_max": 40.0,
     "slot_width": 5.5,
     "collar_od_reference": 45.0,
     "collar_height_reference": 12.0,
-    "reference_url": "https://jp.misumi-ec.com/vona2/detail/221004989375/?HissuCode=SCS2512CN2"
+    "reference_url": "https://jp.misumi-ec.com/vona2/detail/221004989375/?HissuCode=SCS2512CN2",
+    "construction": "Integrated in the continuous 8 mm base; flat underside Z=0"
   }
 }

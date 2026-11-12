@@ -35,7 +35,7 @@ def render(p,r,meshes):
     b,c,k=p['plate'],p['camera'],p['rear_bracket']
     cx=c['forward_offset'];t=b['thickness'];back=cx+c['rear_face_y_source']
     f=plt.figure(figsize=(15,10),facecolor='white')
-    f.suptitle('FreeCAD | PROVISIONAL vertical pipe mount',x=.05,ha='left',fontsize=21,weight='bold')
+    f.suptitle('FreeCAD | Integrated base + vertical pipe mount',x=.05,ha='left',fontsize=21,weight='bold')
     f.text(.05,.927,'25 mm PIPE ASSUMED / ONE COLLAR / PRODUCT MOUNTING DIMENSIONS UNVERIFIED',fontsize=11,color='#286678')
     ax=f.add_subplot(121,projection='3d')
     add_meshes(ax,meshes,['fixture','camera','lidar','collar','pipe'])
@@ -46,7 +46,7 @@ def render(p,r,meshes):
     add_meshes(ax,meshes,['fixture'])
     ax.set(xlim=(-120,35),ylim=(-55,55),zlim=(-10,68),xlabel='X',ylabel='Y',zlabel='Z')
     ax.set_box_aspect((155,110,78));ax.view_init(elev=22,azim=155)
-    ax.set_title('Rear mount | pipe clearance + adjustable collar slots',fontsize=10.5)
+    ax.set_title('One continuous base | pipe clearance + collar slots',fontsize=10.5)
     ax=f.add_subplot(224)
     plane=r['fov']['pupil_lower_bound_x'];front=r['fov']['fixture_max_x']
     ax.axvspan(plane,75,facecolor='#dceee2',alpha=.75)
@@ -58,8 +58,7 @@ def render(p,r,meshes):
     ax.annotate('Rear connector LOW',xy=(cx-24,r['camera_connector_center_global_mm'][2]),
                 xytext=(-58,68),fontsize=8,color='#8c672c',arrowprops=dict(arrowstyle='->',color='#8c672c'))
     m=p['pipe_mount']
-    ax.add_patch(Rectangle((m['pad_rear_x'],m['pad_bottom_z']),m['pad_front_x']-m['pad_rear_x'],m['pad_top_z']-m['pad_bottom_z'],color=COLORS['fixture']))
-    ax.add_patch(Rectangle((m['center_x']-m['collar_od_reference']/2,m['pad_bottom_z']-m['collar_height_reference']),m['collar_od_reference'],m['collar_height_reference'],color=COLORS['collar']))
+    ax.add_patch(Rectangle((m['center_x']-m['collar_od_reference']/2,-m['collar_height_reference']),m['collar_od_reference'],m['collar_height_reference'],color=COLORS['collar']))
     ax.add_patch(Rectangle((m['center_x']-m['pipe_od']/2,-42),m['pipe_od'],42,color=COLORS['pipe']))
     ax.axvline(plane,color='#38784c',ls='--',lw=1.3)
     ax.text(plane+3,66,'Forward rays',color='#38784c',fontsize=9)
@@ -100,9 +99,9 @@ def render(p,r,meshes):
             if 'counterbore' in h:line+=f"; TOP counterbore dia {h['counterbore']:g} x {h['depth']:g} deep"
             lines.append(line)
         lines += ['',
-          'PRINT: PLA; rear pad extends below base; re-evaluate orientation and underside supports.',
+          'PRINT: PLA; continuous flat base underside Z=0 on bed; print PrintableFixture only.',
           ' 40% gyroid and 5 mm brim are starting values. Inspect overhangs/bridges in slicer.',
-          ' Support-free base-down printing is NOT validated for the new stepped underside.',
+          ' Start with supports off; inspect small horizontal screw holes and cable roof in slicer.',
           ' Temperature/speed follow filament and printer profiles. Deburr holes and contact faces.','',
           'ASSEMBLY:',
           '1. Attach inverted LiDAR to base with 4 screws. M3x8 implies 3.5 mm insertion: verify limit.',
@@ -119,16 +118,16 @@ def render(p,r,meshes):
         f3,ax=plt.subplots(figsize=(11.7,8.3));ax.axis('off')
         m=p['pipe_mount']
         notes=[
-            'PROVISIONAL SCS2512CN2 / VERTICAL CARBON PIPE MOUNT',
+            'INTEGRATED BASE / PROVISIONAL SCS2512CN2 PIPE INTERFACE',
             'NOT A VERIFIED PRODUCT INTERFACE - CHECK MANUFACTURER DRAWING BEFORE PRINTING',
             '',
             f"Pipe axis: Z; center X={m['center_x']:g}, Y={m['center_y']:g} mm; assumed OD {m['pipe_od']:g} mm.",
             'Pipe top must stay at or below Z=0 to keep the rear cable path clear.',
             'Pipe wall thickness in the assembly is a visualization assumption only.',
-            f"Rear pad: X={m['pad_rear_x']:g}..{m['pad_front_x']:g}, Y=+/-{m['pad_width']/2:g}, Z={m['pad_bottom_z']:g}..{m['pad_top_z']:g} mm.",
+            f"One base: {b['length_x']:g} x {b['width_y']:g} x {t:g} mm, bottom Z=0; no stepped extension.",
             'Pipe clearance hole: 25.6 mm. Two radial slots along Y, width 5.5 mm.',
             'Opposed bolt-center pitch adjusts from 34 to 40 mm; nominal M5 shaft clearance.',
-            'Collar is BELOW the pad. Bolts enter from ABOVE; use suitable washers.',
+            'Collar is BELOW the base. Bolts enter from ABOVE; use suitable washers.',
             'Collar reference envelope: OD45 x H12 with bore25; NOT verified SCS2512CN2 CAD.',
             'Confirm that the real collar has matching AXIAL mounting holes and insertion depth.',
             'Do not use the slit-clamping screw as a fixture attachment screw.',
@@ -136,7 +135,7 @@ def render(p,r,meshes):
             'Check clamp screw/tool access with the actual collar; simplified envelope has no clamp screw.',
             'Check pipe crushing, single-collar slip/rotation and rear cantilever strength with actual hardware.',
             '',
-            'Assembly: bolt collar under pad, insert pipe from below to Z<=0, then tighten to manufacturer limits.',
+            'Assembly: bolt collar under base, insert pipe from below to Z<=0, then tighten to manufacturer limits.',
             'Printed object is PrintableFixture only; collar and pipe are bought-part references.',
             'CAD checks: one solid; STL/STEP roundtrip; no sensor/envelope collisions; slot/tool access.',
         ]

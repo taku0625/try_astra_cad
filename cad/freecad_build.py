@@ -32,8 +32,6 @@ values = dict(BaseL=B['length_x'], BaseW=B['width_y'], BaseT=B['thickness'], Bas
               CableD=R['cable_diameter'], CableUp=R['cable_upward_extension'],
               CameraSeatZ=camera_seat_z, CableZ=cable_z, BraceW=R['brace_width'], BraceD=R['brace_depth'], BraceH=R['brace_height'])
 values.update(PipeOD=M['pipe_od'], PipeX=M['center_x'], PipeY=M['center_y'],
-              PadRear=M['pad_rear_x'], PadFront=M['pad_front_x'], PadW=M['pad_width'],
-              PadBottom=M['pad_bottom_z'], PadTop=M['pad_top_z'],
               SlotMin=M['slot_pitch_min'], SlotMax=M['slot_pitch_max'], SlotW=M['slot_width'])
 for i,(key,val) in enumerate(values.items(),1):
     S.set(f'A{i}',key);S.set(f'B{i}',f'={val} mm');S.setAlias(f'B{i}',key)
@@ -88,21 +86,19 @@ for i,y in enumerate(['-Parameters.BackW/2','Parameters.BackW/2-Parameters.Brace
                         X2min=0,X2max='Parameters.BraceW',Z2min=0,Z2max=0).items():expr(w,key,val)
     place(w,'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT+1 mm',y,'Parameters.BaseT-1 mm',App.Rotation(V(0,0,1),90))
     braces.append(w)
-# Low rear tongue: keep its top below the camera cable insertion envelope.
-pad=box('PipeMountPad','Parameters.PadFront-Parameters.PadRear','Parameters.PadW',
-        'Parameters.PadTop-Parameters.PadBottom','Parameters.PadRear','-Parameters.PadW/2','Parameters.PadBottom')
-stock=fuse('OnePieceStock',[base,back,*braces,pad])
+# The enlarged rounded base includes the pipe mount at the same thickness and level.
+stock=fuse('OnePieceStock',[base,back,*braces])
 tools=[];holes=[]
-tools.append(cyl('PipeClearance','(Parameters.PipeOD+0.6 mm)/2','Parameters.PadTop-Parameters.PadBottom+2 mm',
-                 'Parameters.PipeX','Parameters.PipeY','Parameters.PadBottom-1 mm'))
+tools.append(cyl('PipeClearance','(Parameters.PipeOD+0.6 mm)/2','Parameters.BaseT+2 mm',
+                 'Parameters.PipeX','Parameters.PipeY',-1))
 # Two radial slots for a provisional axial two-hole attachment. Not certified product dimensions.
 for i,sign in enumerate([-1,1]):
     y0='Parameters.PipeY'+(' - Parameters.SlotMax/2' if sign<0 else ' + Parameters.SlotMin/2')
     parts=[box(f'CollarSlotWeb{i}','Parameters.SlotW','(Parameters.SlotMax-Parameters.SlotMin)/2',
-               'Parameters.PadTop-Parameters.PadBottom+2 mm','Parameters.PipeX-Parameters.SlotW/2',y0,'Parameters.PadBottom-1 mm')]
+               'Parameters.BaseT+2 mm','Parameters.PipeX-Parameters.SlotW/2',y0,-1)]
     for j,pitch in enumerate(['SlotMin','SlotMax']):
-        parts.append(cyl(f'CollarSlotEnd{i}_{j}','Parameters.SlotW/2','Parameters.PadTop-Parameters.PadBottom+2 mm',
-                         'Parameters.PipeX',f'Parameters.PipeY+{sign}*Parameters.{pitch}/2','Parameters.PadBottom-1 mm'))
+        parts.append(cyl(f'CollarSlotEnd{i}_{j}','Parameters.SlotW/2','Parameters.BaseT+2 mm',
+                         'Parameters.PipeX',f'Parameters.PipeY+{sign}*Parameters.{pitch}/2',-1))
     tools.append(fuse(f'CollarSlot{i}',parts))
 for i,(x,y) in enumerate(B['host_holes_xy']):
     tools.append(cyl(f'HostHole{i}',B['host_hole_diameter']/2,'Parameters.BaseT+2 mm',x,y,-1))
@@ -170,13 +166,13 @@ S.Visibility=False
 # Simplified bought-part envelopes; deliberately not labeled as exact manufacturer geometry.
 mount_refs=[]
 for name,outer,inner,z,height in [
-    ('CollarEnvelope',M['collar_od_reference'],M['pipe_od'],M['pad_bottom_z']-M['collar_height_reference'],M['collar_height_reference']),
+    ('CollarEnvelope',M['collar_od_reference'],M['pipe_od'],-M['collar_height_reference'],M['collar_height_reference']),
     ('CarbonPipeEnvelope',M['pipe_od'],M['pipe_id_reference'],M['pipe_top_z']-M['pipe_length_reference'],M['pipe_length_reference'])]:
     o=D.addObject('Part::Feature',name)
     o.Label='UNVERIFIED ENVELOPE '+name
     origin=V(M['center_x'],M['center_y'],z)
     o.Shape=Part.makeCylinder(outer/2,height,origin).cut(Part.makeCylinder(inner/2,height,origin))
-    # Keep pipe position/diameter editable alongside the printable mount.
+    # These reference envelopes are regenerated from JSON, not spreadsheet expressions.
     o.Visibility=True
     mount_refs.append(o)
 D.recompute()
@@ -188,15 +184,19 @@ for o in mount_refs:
     assert shape.common(o.Shape).Volume<1e-5, ('Mount interference',o.Name)
     for sensor in refs.values():
         assert o.Shape.common(sensor.Shape).Volume<1e-5, ('Reference collision',o.Name,sensor.Name)
-assert M['pad_top_z'] < B['thickness']+cable_z-R['cable_diameter']/2
+# One flat-bottom base, with a full-thickness bridge across the former stepped joint.
+assert abs(shape.BoundBox.ZMin)<1e-8
+bridge=Part.makeBox(1,10,B['thickness'],V(-60,20,0))
+assert abs(shape.common(bridge).Volume-bridge.Volume)<1e-5
+assert D.getObject('PipeMountPad') is None
 assert M['slot_pitch_min']/2-M['slot_width']/2-(M['pipe_od']+0.6)/2 >= 1.4
 # Check both ends of each slot, including a nominal M5 shaft and top-side driver access.
 for sign in [-1,1]:
     for pitch in [M['slot_pitch_min'],M['slot_pitch_max']]:
         x,y=M['center_x'],M['center_y']+sign*pitch/2
-        probe=Part.makeCylinder(2.5,12,V(x,y,M['pad_bottom_z']-1))
+        probe=Part.makeCylinder(2.5,12,V(x,y,-1))
         assert shape.common(probe).Volume<1e-5
-        driver=Part.makeCylinder(5,40,V(x,y,M['pad_top_z']+0.01))
+        driver=Part.makeCylinder(5,40,V(x,y,B['thickness']+0.01))
         assert shape.common(driver).Volume<1e-5
         for sensor in refs.values(): assert sensor.Shape.common(driver).Volume<1e-5
 assert all(v<1e-5 for v in interferences.values()),interferences
@@ -320,6 +320,7 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
         'holes':holes,'printing':P['printing'],'unresolved':P['unresolved'],
         'source_sha256':{k:hashlib.sha256((ROOT/'cad'/P[k]['reference_file']).read_bytes()).hexdigest() for k in refs}}
 report['pipe_mount']=dict(M, mounting_dimensions_verified=False, pipe_od_verified=False, reference_collision_check='PASS - provisional envelopes only', slot_and_tool_access='PASS - M5 shaft at pitch 34 and 40 mm', minimum_slot_pipe_ligament_mm=M['slot_pitch_min']/2-M['slot_width']/2-(M['pipe_od']+0.6)/2)
+report['integrated_base']='PASS - single solid, flat underside Z=0, full-thickness bridge across former joint'
 report['parameters_sha256']=hashlib.sha256((ROOT/'cad/parameters.json').read_bytes()).hexdigest()
 report['model_script_sha256']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 report['STL_roundtrip']='PASS - reimported closed manifold, one connected component'
