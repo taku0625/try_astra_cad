@@ -54,7 +54,9 @@
     "hole_pitch_y": 36.0,
     "clearance_diameter": 3.6,
     "counterbore_diameter": 6.8,
-    "counterbore_depth": 3.5
+    "counterbore_depth": 3.5,
+    "mount_rotation_z_deg": 90.0,
+    "rotation_basis": "Relative to previous downward pose: +90 deg about assembly +Z, counterclockwise viewed from above"
   },
   "printing": {
     "process": "FDM",

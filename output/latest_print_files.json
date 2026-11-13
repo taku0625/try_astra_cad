@@ -1,0 +1,14 @@
+{
+  "model_input_id": "5806d96177",
+  "lidar_mount_rotation_z_deg": 90.0,
+  "files": {
+    "stl": {
+      "name": "fixture_mid360_z90_5806d96177.stl",
+      "sha256": "7cc72cd12c15ae3adc49160f0ed6e23ee7fc9965f92b29af38820abca6a7d701"
+    },
+    "step": {
+      "name": "fixture_mid360_z90_5806d96177.step",
+      "sha256": "59f97c0d31b761cda395271d148c4ca059c14493b35fee7fbb2baf3adf1052b3"
+    }
+  }
+}

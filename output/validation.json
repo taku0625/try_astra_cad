@@ -80,8 +80,27 @@
     ]
   ],
   "camera_foot_area_mm2": 667.9645183811328,
-  "camera_supported_area_mm2": 612.5980597492842,
-  "camera_support_fraction": 0.9171116771800486,
+  "camera_supported_area_mm2": 667.9645183811328,
+  "camera_support_fraction": 1.0,
+  "lidar_mount_rotation_z_deg": 90.0,
+  "lidar_mount_hole_centers_xy": [
+    [
+      18.0,
+      -24.0
+    ],
+    [
+      -18.0,
+      -24.0
+    ],
+    [
+      18.0,
+      24.0
+    ],
+    [
+      -18.0,
+      24.0
+    ]
+  ],
   "lidar_screw_access": "PASS - all four screws accessible before camera insertion",
   "directions": {
     "camera_forward": [
@@ -90,9 +109,9 @@
       -2.465190328815662e-32
     ],
     "lidar_scan": [
-      2.465190328815662e-32,
-      2.220446049250313e-16,
-      -1.0
+      -2.220446049250313e-16,
+      0.0,
+      -1.0000000000000002
     ],
     "camera_cable": [
       -1.0,
@@ -100,8 +119,8 @@
       2.465190328815662e-32
     ],
     "lidar_cable": [
-      -1.0,
-      1.2246467991473532e-16,
+      -4.440892098500626e-16,
+      -1.0000000000000002,
       0.0
     ]
   },
@@ -114,8 +133,8 @@
     "entrance_pupil_verified": false,
     "result": "PASS for assumed forward hemisphere; verify actual image and full calibrated FOV"
   },
-  "fixture_volume_mm3": 121397.49707269388,
-  "pla_solid_mass_g_at_1_24": 150.5328963701404,
+  "fixture_volume_mm3": 121397.49707268554,
+  "pla_solid_mass_g_at_1_24": 150.53289637013006,
   "holes": [
     {
       "type": "HOST",
@@ -152,8 +171,8 @@
     {
       "type": "LIDAR",
       "xy": [
-        -24.0,
-        -18.0
+        18.0,
+        -24.0
       ],
       "diameter": 3.6,
       "counterbore": 6.8,
@@ -162,8 +181,8 @@
     {
       "type": "LIDAR",
       "xy": [
-        -24.0,
-        18.0
+        -18.0,
+        -24.0
       ],
       "diameter": 3.6,
       "counterbore": 6.8,
@@ -172,8 +191,8 @@
     {
       "type": "LIDAR",
       "xy": [
-        24.0,
-        -18.0
+        18.0,
+        24.0
       ],
       "diameter": 3.6,
       "counterbore": 6.8,
@@ -182,8 +201,8 @@
     {
       "type": "LIDAR",
       "xy": [
-        24.0,
-        18.0
+        -18.0,
+        24.0
       ],
       "diameter": 3.6,
       "counterbore": 6.8,
@@ -241,8 +260,8 @@
     "minimum_slot_pipe_ligament_mm": 1.4499999999999993
   },
   "integrated_base": "PASS - single solid, flat underside Z=0, full-thickness bridge across former joint",
-  "parameters_sha256": "4ce977f12b07e016426136aba380be9f0993b861702af505a0778c0b5ff6e6ac",
-  "model_script_sha256": "aa1fa24f952b277a8f7fa7642c9b99cb974f4b958700ebce617a4abafda69fb1",
+  "parameters_sha256": "d2e5b7e756bbe0930b106b0be8c48bb1b866e84f315a0a9d5492f1ff6fb7bcf3",
+  "model_script_sha256": "9983c032d0b5bf0aa9e667cf55411c20a2967cc54a408c8c4805723116fc57b2",
   "STL_roundtrip": "PASS - reimported closed manifold, one connected component",
   "FCStd_reopen_parameter_edit": "PASS - reopen, change back plate thickness +1 mm, recompute, restore",
   "STEP_roundtrip": "PASS - valid single solid, volume preserved"

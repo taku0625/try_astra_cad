@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import subprocess
+import shutil
 import zipfile
 from pathlib import Path
 os.environ.setdefault('MPLCONFIGDIR','/tmp/try-astra-cad-mpl')
@@ -41,7 +42,7 @@ def render(p,r,meshes):
     add_meshes(ax,meshes,['fixture','camera','lidar','collar','pipe'])
     ax.set(xlim=(-120,65),ylim=(-60,60),zlim=(-125,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
     ax.set_box_aspect((185,120,195));ax.view_init(elev=20,azim=35)
-    ax.set_title('Camera above, inverted MID-360 below',fontsize=11)
+    ax.set_title(f"Camera above | MID-360 down, Z rotation +{p['lidar']['mount_rotation_z_deg']:g} deg",fontsize=11)
     ax=f.add_subplot(222,projection='3d')
     add_meshes(ax,meshes,['fixture'])
     ax.set(xlim=(-120,35),ylim=(-55,55),zlim=(-10,68),xlabel='X',ylabel='Y',zlabel='Z')
@@ -83,7 +84,8 @@ def render(p,r,meshes):
           f"Rear plate camera contact face X={back:g}; rear face X={back-k['thickness']:g}.",
           'Camera datum X=22 (8 mm rearward from previous X=30), Y=0; bottom Z=8.',
           'Camera roll: 180 deg about forward +X; source +Z points DOWN; rear connector below lens.',
-          'MID-360 datum XY=(0,0), mounting face Z=0, scan downward -Z. Both cables exit -X.','',
+          'MID-360 datum XY=(0,0), mounting face Z=0, scan downward -Z.',
+          f"MID-360 Z rotation: +{p['lidar']['mount_rotation_z_deg']:g} deg from previous pose; camera cable -X, LiDAR cable -Y.",'',
           'CAMERA REAR ATTACHMENT:',
           f" 4 x dia {k['camera_clearance_diameter']:g} THRU, length {k['thickness']:g}, along X; Y=+/-12.5, Z=18/43 (25 x 25 pitch).",
           ' Source STEP rear face Y=-16.4: four entry loops diameter 2.57 at X/Z=+/-12.5.',
@@ -153,6 +155,15 @@ def main():
         assert hashlib.sha256((ROOT/'cad'/filename).read_bytes()).hexdigest()==r[key], 'CAD cache is stale; rerun without --render-only'
     meshes=json.loads((ROOT/'.cache/render-meshes.json').read_text())
     render(p,r,meshes)
+    # Distinct filenames identify the actual CAD inputs, avoiding ambiguous downloads.
+    input_digest=hashlib.sha256((ROOT/'cad/parameters.json').read_bytes()+(ROOT/'cad/freecad_build.py').read_bytes()).hexdigest()[:10]
+    stem=f"fixture_mid360_z{p['lidar']['mount_rotation_z_deg']:g}_{input_digest}"
+    manifest={'model_input_id':input_digest,'lidar_mount_rotation_z_deg':p['lidar']['mount_rotation_z_deg'],'files':{}}
+    for suffix in ['stl','step']:
+        target=OUT/f'{stem}.{suffix}'
+        shutil.copyfile(OUT/f'fixture.{suffix}',target)
+        manifest['files'][suffix]={'name':target.name,'sha256':hashlib.sha256(target.read_bytes()).hexdigest()}
+    (OUT/'latest_print_files.json').write_text(json.dumps(manifest,indent=2)+'\n')
     # Retire only the known generated parts of the former multi-part design.
     for name in ['plate.step','plate.stl','plate.dxf','plate_bottom.dxf','cap.step','cap.stl','cap.dxf',
                  'post_1.step','post_1.stl','post_2.step','post_2.stl','top_pad.step','top_pad.stl']:

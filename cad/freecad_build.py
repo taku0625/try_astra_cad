@@ -23,6 +23,7 @@ S = D.addObject('Spreadsheet::Sheet', 'Parameters')
 S.Label = 'Editable dimensions (mm)'
 B,C,L,R = P['plate'],P['camera'],P['lidar'],P['rear_bracket']
 M=P['pipe_mount']
+lidar_yaw=App.Rotation(V(0,0,1),L['mount_rotation_z_deg'])
 camera_rotation=App.Rotation(V(1,0,0),C['roll_about_forward_deg']).multiply(App.Rotation(V(0,0,1),-90))
 camera_seat_z=camera_rotation.multVec(V(0,0,C['seating_plane_z_source'])).z
 cable_z=camera_rotation.multVec(V(0,0,C['rear_connector_z_source'])).z-camera_seat_z
@@ -103,7 +104,12 @@ for i,sign in enumerate([-1,1]):
 for i,(x,y) in enumerate(B['host_holes_xy']):
     tools.append(cyl(f'HostHole{i}',B['host_hole_diameter']/2,'Parameters.BaseT+2 mm',x,y,-1))
     holes.append(dict(type='HOST',xy=[x,y],diameter=B['host_hole_diameter']))
-for i,(x,y) in enumerate([(x,y) for x in [-L['hole_pitch_x']/2,L['hole_pitch_x']/2] for y in [-L['hole_pitch_y']/2,L['hole_pitch_y']/2]]):
+lidar_hole_centers=[]
+for x in [-L['hole_pitch_x']/2,L['hole_pitch_x']/2]:
+    for y in [-L['hole_pitch_y']/2,L['hole_pitch_y']/2]:
+        pt=lidar_yaw.multVec(V(x,y,0))
+        lidar_hole_centers.append((round(pt.x,9),round(pt.y,9)))
+for i,(x,y) in enumerate(lidar_hole_centers):
     tools.append(cyl(f'LiDARHole{i}',L['clearance_diameter']/2,'Parameters.BaseT+2 mm',x,y,-1))
     tools.append(cyl(f'LiDARCounterbore{i}',L['counterbore_diameter']/2,L['counterbore_depth']+1,
                      x,y,f"Parameters.BaseT-{L['counterbore_depth']} mm"))
@@ -144,7 +150,7 @@ assert not fixture.Shape.isNull(), 'FreeCAD feature recompute failed'
 assert fixture.Shape.isValid() and len(fixture.Shape.Solids)==1, 'Fixture must be one valid solid'
 
 # User STEP geometry: camera rolled 180 degrees about +X, rear connector low.
-# MID-360 points down; both ports still face -X.
+# MID-360 stays downward; yaw rotates its body and mounting holes together.
 refs={}
 for name,key in [('Camera','camera'),('MID360','lidar')]:
     o=D.addObject('Part::Feature',name);o.Label='REFERENCE '+name
@@ -154,7 +160,7 @@ for name,key in [('Camera','camera'),('MID360','lidar')]:
         o.setExpression('Placement.Base.x','Parameters.CameraX')
         o.setExpression('Placement.Base.z','Parameters.BaseT-Parameters.CameraSeatZ')
     else:
-        r=App.Rotation(V(0,0,1),180).multiply(App.Rotation(V(1,0,0),-90))
+        r=lidar_yaw.multiply(App.Rotation(V(0,0,1),180).multiply(App.Rotation(V(1,0,0),-90)))
         o.Placement=App.Placement(V(0,0,L['bottom_y_source']),r)
     refs[key]=o
 D.recompute()
@@ -208,7 +214,7 @@ camport=refs['camera'].Placement.Rotation.multVec(V(0,-1,0))
 lidport=refs['lidar'].Placement.Rotation.multVec(V(1,0,0))
 cam_source_z=refs['camera'].Placement.Rotation.multVec(V(0,0,1))
 assert (camdir-V(1,0,0)).Length<1e-8 and (liddir-V(0,0,-1)).Length<1e-8
-assert (camport-V(-1,0,0)).Length<1e-8 and (lidport-V(-1,0,0)).Length<1e-8
+assert (camport-V(-1,0,0)).Length<1e-8 and (lidport-lidar_yaw.multVec(V(-1,0,0))).Length<1e-8
 assert (cam_source_z-V(0,0,-1)).Length<1e-8, 'Camera roll must put source +Z downward'
 connector=refs['camera'].Placement.multVec(V(0,C['rear_face_y_source'],C['rear_connector_z_source']))
 assert abs(connector.y)<1e-8 and abs(connector.z-(B['thickness']+cable_z))<1e-8
@@ -310,6 +316,8 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
         'camera_assembly_approach':'PASS - exact sensor at 8 approach offsets along X; final rear contact and cable clearance',
         'camera_back_hole_centers_global':rear_global,'camera_foot_area_mm2':full_foot_area,
         'camera_supported_area_mm2':supported_area,'camera_support_fraction':supported_area/full_foot_area,
+        'lidar_mount_rotation_z_deg':L['mount_rotation_z_deg'],
+        'lidar_mount_hole_centers_xy':lidar_hole_centers,
         'lidar_screw_access':'PASS - all four screws accessible before camera insertion',
         'directions':dict(camera_forward=list(camdir),lidar_scan=list(liddir),camera_cable=list(camport),lidar_cable=list(lidport)),
         'fov':dict(assumption='Entrance pupil at or forward of lens-barrel rear plane; all forward rays have nonnegative X direction',
