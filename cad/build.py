@@ -178,7 +178,10 @@ def main():
     meshes=json.loads((ROOT/'.cache'/('render-meshes-split.json' if split else 'render-meshes.json')).read_text())
     if split:
         from render_assembly import render_assembly
-        render_assembly(p,r,meshes,OUT)
+        subprocess.run([os.environ.get('FREECAD_PYTHON','/usr/bin/python3'),str(ROOT/'cad/adapter_hole_detail.py')],
+                       cwd=ROOT,check=True)
+        detail=json.loads((ROOT/'.cache/adapter-hole-detail.json').read_text())
+        render_assembly(p,r,meshes,OUT,detail)
     else:
         render(p,r,meshes)
     # Distinct filenames identify the actual CAD inputs, avoiding ambiguous downloads.

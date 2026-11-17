@@ -2,7 +2,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.patches import Patch
+from matplotlib.collections import PolyCollection
+from matplotlib.patches import Patch, Circle, Polygon
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 
@@ -36,7 +37,78 @@ def format_axes(ax, limits, aspect, azimuth):
     ax.tick_params(labelsize=8)
 
 
-def render_assembly(p, report, meshes, out):
+def adapter_hole_figure(p, meshes, detail):
+    """Orthographic mating-face view and a section through the exported CAD."""
+    fig = plt.figure(figsize=(14, 8.5), facecolor='white')
+    fig.suptitle('Four LiDAR mounting holes | adapter only', fontsize=20, y=.96, weight='bold')
+    fig.text(.06,.90,'Screws, base and sensor hidden. Blue rings identify H1-H4; side-wing M4 holes are a separate joint.',fontsize=11)
+    ax = fig.add_axes([.065,.23,.41,.58])
+    angle = np.deg2rad(p['lidar']['mount_rotation_y_deg'])
+    origin = np.array([0,0,p['lidar']['mount_center_z']])
+    tangent = np.array([np.cos(angle),0,-np.sin(angle)])
+    normal = np.array([np.sin(angle),0,np.cos(angle)])
+    item = meshes['lidar_adapter']
+    vertices = np.asarray(item['vertices'])-origin
+    faces = vertices[np.asarray(item['triangles'])]
+    projected = np.stack([faces[:,:,1], faces@tangent],axis=-1)
+    # Look from the sensor side (-normal): draw far surfaces first, leaving
+    # the true CAD openings visible instead of adding artificial hole circles.
+    order = np.argsort((faces@normal).mean(axis=1))[::-1]
+    normals = np.cross(faces[:,1]-faces[:,0],faces[:,2]-faces[:,0])
+    normals /= np.maximum(np.linalg.norm(normals,axis=1,keepdims=True),1e-12)
+    light = .60+.40*np.abs(normals@normal)
+    color = np.array([.84,.51,.25])[None,:]*light[:,None]
+    ax.add_collection(PolyCollection(projected[order],facecolors=color[order],edgecolors='none'))
+    accent = '#125b8f'
+    for h in detail['holes']:
+        point = np.asarray(h['mount_center_mm'])-origin
+        y,u = point[1],point@tangent
+        ax.add_patch(Circle((y,u),4.2,fill=False,lw=1.3,edgecolor=accent))
+        label_y = y-10 if y<0 else y+10
+        label_u = u+9 if u>0 else u-9
+        ax.annotate(h['id'],xy=(y,u),xytext=(label_y,label_u),ha='center',va='center',
+                    color=accent,fontsize=12,weight='bold',arrowprops=dict(arrowstyle='-',color=accent,lw=.8))
+    centers = np.array([h['mount_center_mm'] for h in detail['holes']])-origin
+    ymin,ymax = centers[:,1].min(),centers[:,1].max()
+    umin,umax = (centers@tangent).min(),(centers@tangent).max()
+    ax.annotate('',xy=(ymax,-40),xytext=(ymin,-40),arrowprops=dict(arrowstyle='<->',lw=.8))
+    ax.text(0,-44,f'{ymax-ymin:g} mm',ha='center',fontsize=10)
+    ax.annotate('',xy=(-57,umax),xytext=(-57,umin),arrowprops=dict(arrowstyle='<->',lw=.8))
+    ax.text(-61,0,f'{umax-umin:g} mm',va='center',ha='center',rotation=90,fontsize=10)
+    ax.set(xlim=(-65,65),ylim=(-47,43),xlabel='Y (mm)',ylabel='Along slope toward +X (mm)',
+           title='LiDAR mating face — viewed square-on')
+    ax.set_aspect('equal');ax.tick_params(labelsize=8)
+
+    ax = fig.add_axes([.565,.23,.40,.58])
+    for loop in detail['section_loops_xz']:
+        ax.add_patch(Polygon(loop,facecolor='#ecd0b5',edgecolor='#543d2d',lw=1))
+    row = [h for h in detail['holes'] if abs(h['mount_center_mm'][1]-detail['section_y_mm'])<1e-6]
+    for h in row:
+        entry = np.asarray(h['entry_center_mm'])
+        seat = np.asarray(h['seat_center_mm'])
+        point = np.asarray(h['mount_center_mm'])
+        start = entry+np.asarray(h['headward_axis'])*12
+        ax.plot([seat[0],point[0]],[seat[2],point[2]],ls='--',lw=1,color=accent)
+        ax.annotate('',xy=(seat[0],seat[2]),xytext=(start[0],start[2]),
+                    arrowprops=dict(arrowstyle='->',color=accent,lw=1.8))
+        if h['entry_face']=='top':
+            ax.text(start[0]+2,start[2]+3,f"{h['id']}: TOP entry",fontsize=10,color=accent,weight='bold')
+        else:
+            ax.text(start[0]-10,start[2]+5,f"{h['id']}: REAR entry\n(-X face)",fontsize=10,color=accent,weight='bold')
+    ax.annotate('LiDAR mating face',xy=(0,p['lidar']['mount_center_z']),xytext=(-7,-40),
+                fontsize=9,ha='center',arrowprops=dict(arrowstyle='-',color='#543d2d'))
+    ax.set(xlim=(-48,38),ylim=(-44,20),xlabel='X / front (mm)',ylabel='Z (mm)',
+           title=f"Actual CAD section at Y = +{detail['section_y_mm']:g} mm (H2 / H4)")
+    ax.set_aspect('equal');ax.tick_params(labelsize=8)
+    fig.text(.565,.195,'Arrows: screw / driver insertion. H1 / H3 have the same paths at Y = -24 mm.',fontsize=9)
+    fig.text(.06,.13,'4 x dia3.6 through-holes at the LiDAR face; 4 x dia6.8 head / tool channels.',fontsize=12,weight='bold')
+    fig.text(.06,.095,'TOP entry: H1 / H2. REAR (-X) entry: H3 / H4. These are four separate screw paths.',fontsize=11)
+    fig.text(.06,.06,'Attach the LiDAR with four M3x8 screws while the adapter is detached. Headward axis: (-0.5, 0, +0.866025).',fontsize=10)
+    fig.text(.06,.028,'The upper/base-contact face alone does not show all four access openings. No CAD geometry was changed for this drawing.',fontsize=10,color='#586472')
+    return fig
+
+
+def render_assembly(p, report, meshes, out, detail):
     lidar, joint = p['lidar'], p['assembly_joint']
     with PdfPages(out/'assembly_guide.pdf') as pdf:
         fig = plt.figure(figsize=(12, 9), facecolor='white')
@@ -79,6 +151,11 @@ def render_assembly(p, report, meshes, out):
         fig.text(.07,.055,'Exploded spacing is for illustration. Sensors, pipe and collar are hidden; these are two printed parts, not one STL.',fontsize=10)
         fig.text(.07,.025,'M3 screws are shown installed. M4 threads and drive sockets are simplified reference envelopes.',fontsize=9,color='#586472')
         fig.savefig(out/'exploded_view.png',dpi=150)
+        pdf.savefig(fig)
+        plt.close(fig)
+
+        fig = adapter_hole_figure(p, meshes, detail)
+        fig.savefig(out/'adapter_holes.png',dpi=170)
         pdf.savefig(fig)
         plt.close(fig)
 

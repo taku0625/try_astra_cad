@@ -1,0 +1,117 @@
+{
+  "source_step": "lidar_adapter.step",
+  "source_step_sha256": "aa84efad91e95b36ccd9ea4e0ab472285b41a2828de7ff1c75a47aa8f1c94610",
+  "source_fcstd_sha256": "e9009ba8fde2000ba10c0c469451c9f62ae5f3066ac90421dab042ae11f79fbb",
+  "result": "PASS - four separate through bores and clear M3 head/driver paths in exported STEP",
+  "hole_count": 4,
+  "top_entry_count": 2,
+  "rear_entry_count": 2,
+  "holes": [
+    {
+      "id": "H1",
+      "mount_center_mm": [
+        15.588457268119885,
+        -24.0,
+        -10.999999999999996
+      ],
+      "seat_center_mm": [
+        13.338457268119884,
+        -24.0,
+        -7.102885682970024
+      ],
+      "headward_axis": [
+        -0.5000000000000004,
+        0.0,
+        0.8660254037844384
+      ],
+      "entry_center_mm": [
+        9.237604307033997,
+        -24.0,
+        -8.881784197001252e-16
+      ],
+      "entry_face": "top",
+      "bore_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0
+    },
+    {
+      "id": "H2",
+      "mount_center_mm": [
+        15.588457268119893,
+        23.999999999999993,
+        -10.99999999999999
+      ],
+      "seat_center_mm": [
+        13.33845726811989,
+        23.999999999999993,
+        -7.102885682970017
+      ],
+      "headward_axis": [
+        -0.5000000000000004,
+        0.0,
+        0.8660254037844384
+      ],
+      "entry_center_mm": [
+        9.237604307034008,
+        23.999999999999993,
+        0.0
+      ],
+      "entry_face": "top",
+      "bore_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0
+    },
+    {
+      "id": "H3",
+      "mount_center_mm": [
+        -15.588457268119893,
+        -23.999999999999993,
+        -29.00000000000001
+      ],
+      "seat_center_mm": [
+        -17.838457268119896,
+        -23.999999999999993,
+        -25.102885682970037
+      ],
+      "headward_axis": [
+        -0.5000000000000004,
+        0.0,
+        0.8660254037844384
+      ],
+      "entry_center_mm": [
+        -29.0,
+        -23.999999999999993,
+        -5.77052658050259
+      ],
+      "entry_face": "rear (-X)",
+      "bore_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0
+    },
+    {
+      "id": "H4",
+      "mount_center_mm": [
+        -15.588457268119885,
+        24.0,
+        -29.000000000000004
+      ],
+      "seat_center_mm": [
+        -17.83845726811989,
+        24.0,
+        -25.10288568297003
+      ],
+      "headward_axis": [
+        -0.5000000000000004,
+        0.0,
+        0.8660254037844384
+      ],
+      "entry_center_mm": [
+        -29.0,
+        24.0,
+        -5.7705265805025725
+      ],
+      "entry_face": "rear (-X)",
+      "bore_interference_mm3": 0.0,
+      "driver_interference_mm3": 0.0
+    }
+  ],
+  "section_y_mm": 23.999999999999993,
+  "section_closed_loop_count": 3
+}
