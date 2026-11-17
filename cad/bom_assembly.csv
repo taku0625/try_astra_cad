@@ -1,0 +1,12 @@
+item,quantity,material_or_spec,notes
+printed common base,1,PLA,145x100x62; print base.stl flat underside down
+printed LiDAR adapter,1,PLA,58x100x36.743; lidar_adapter.stl is flipped to bed orientation; attach LiDAR before joining base
+camera rear screw,4,M1.6x8 user specified,25x25 pattern; dia1.8 holes through 4mm plate; 8mm excludes head; 4mm insertion without washer; confirm insertion limit and head size
+LiDAR screw,4,M3x8 conditional,Z+90 then assembly Y-30deg; angled dia3.6 bores and dia6.8 head/tool channels; normal seat thickness4.5; insertion3.5; confirm actual thread/depth and head fit
+adapter joint screw,4,M4x20 socket cap,Head diameter7 height4; insert from above common base
+adapter joint washer,4,M4 flat washer OD9 ID4.3 thickness0.8,On top of base under each M4 head
+adapter joint nut,4,M4 hex nut AF7 height3.2,Underside pockets AF7.4 depth3.5; hold nuts until bolts engage; 1.5mm nominal bolt protrusion
+host fastener,4,M5 proposal,host-dependent length; host must clear LiDAR and rear cables
+slit collar,1,SCS2512CN2 requested,dimensions and axial mounting holes UNVERIFIED; envelope OD45 bore25 H12 is provisional
+carbon pipe,1,assumed OD25,actual OD and wall thickness unconfirmed; top at Z0 or below
+collar attachment screws and washers,2,to be selected after checking collar drawing,slots width5.5 pitch34-40; do not assume M5 threads from clearance size

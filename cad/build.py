@@ -161,22 +161,38 @@ def render(p,r,meshes):
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--render-only',action='store_true');args=parser.parse_args()
+    global OUT
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--render-only',action='store_true')
+    parser.add_argument('--variant',choices=['integrated','split'],default='integrated')
+    args=parser.parse_args()
+    split=args.variant=='split'
+    OUT=ROOT/'output'/('split_assembly' if split else '')
     if not args.render_only:
-        subprocess.run([os.environ.get('FREECAD_PYTHON','/usr/bin/python3'),str(ROOT/'cad/freecad_build.py')],cwd=ROOT,check=True)
+        subprocess.run([os.environ.get('FREECAD_PYTHON','/usr/bin/python3'),str(ROOT/'cad/freecad_build.py'),
+                        '--variant',args.variant],cwd=ROOT,check=True)
     p=json.loads((ROOT/'cad/parameters.json').read_text());r=json.loads((OUT/'validation.json').read_text())
+    assert r['variant']==args.variant, 'CAD cache belongs to another variant'
     for filename,key in [('parameters.json','parameters_sha256'),('freecad_build.py','model_script_sha256')]:
         assert hashlib.sha256((ROOT/'cad'/filename).read_bytes()).hexdigest()==r[key], 'CAD cache is stale; rerun without --render-only'
-    meshes=json.loads((ROOT/'.cache/render-meshes.json').read_text())
-    render(p,r,meshes)
+    meshes=json.loads((ROOT/'.cache'/('render-meshes-split.json' if split else 'render-meshes.json')).read_text())
+    if split:
+        from render_assembly import render_assembly
+        render_assembly(p,r,meshes,OUT)
+    else:
+        render(p,r,meshes)
     # Distinct filenames identify the actual CAD inputs, avoiding ambiguous downloads.
     input_digest=hashlib.sha256((ROOT/'cad/parameters.json').read_bytes()+(ROOT/'cad/freecad_build.py').read_bytes()).hexdigest()[:10]
     stem=f"fixture_mid360_z{p['lidar']['mount_rotation_z_deg']:g}_y{p['lidar']['mount_rotation_y_deg']:g}_{input_digest}"
-    manifest={'model_input_id':input_digest,'lidar_mount_rotation_z_deg':p['lidar']['mount_rotation_z_deg'],'lidar_mount_rotation_y_deg':p['lidar']['mount_rotation_y_deg'],'files':{}}
-    for suffix in ['stl','step']:
-        target=OUT/f'{stem}.{suffix}'
-        shutil.copyfile(OUT/f'fixture.{suffix}',target)
-        manifest['files'][suffix]={'name':target.name,'sha256':hashlib.sha256(target.read_bytes()).hexdigest()}
+    manifest={'model_input_id':input_digest,'variant':args.variant,'printed_part_count':r['printed_part_count'],
+              'lidar_mount_rotation_z_deg':p['lidar']['mount_rotation_z_deg'],'lidar_mount_rotation_y_deg':p['lidar']['mount_rotation_y_deg'],'files':{}}
+    for part in (['base','lidar_adapter'] if split else ['fixture']):
+        for suffix in ['stl','step']:
+            target=OUT/(f'{part}_y{p["lidar"]["mount_rotation_y_deg"]:g}_{input_digest}.{suffix}' if split else f'{stem}.{suffix}')
+            shutil.copyfile(OUT/f'{part}.{suffix}',target)
+            key=f'{part}_{suffix}' if split else suffix
+            manifest['files'][key]={'name':target.name,'sha256':hashlib.sha256(target.read_bytes()).hexdigest()}
+    if split:manifest['stl_orientation']='Both STLs sit on Z=0; adapter is rotated 180 degrees about X relative to assembly STEP.'
     (OUT/'latest_print_files.json').write_text(json.dumps(manifest,indent=2)+'\n')
     # Retire only the known generated parts of the former multi-part design.
     for name in ['plate.step','plate.stl','plate.dxf','plate_bottom.dxf','cap.step','cap.stl','cap.dxf',
@@ -184,15 +200,17 @@ def main():
         (OUT/name).unlink(missing_ok=True)
     for backup in OUT.glob('*.FCStd1'):backup.unlink()
     (ROOT/'cad/.render-meshes.json').unlink(missing_ok=True)
-    with zipfile.ZipFile(ROOT/'fixture_cad.zip','w',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
-        for name in ['README.md','requirements.txt']:z.write(ROOT/name,name)
-        for folder in ['cad','output']:
-            for path in sorted((ROOT/folder).rglob('*')):
+    archive=ROOT/('fixture_assembly_cad.zip' if split else 'fixture_cad.zip')
+    with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+        for name in ['README.md','ASSEMBLY.md','requirements.txt']:z.write(ROOT/name,name)
+        for folder in [ROOT/'cad',OUT]:
+            for path in sorted(folder.rglob('*')):
+                if not split and (ROOT/'output/split_assembly') in path.parents:continue
                 if (path.is_file() and '__pycache__' not in path.parts and not path.name.startswith('.')
                         and path.suffix not in ['.FCBak','.FCStd1']):
                     z.write(path,path.relative_to(ROOT))
-    with zipfile.ZipFile(ROOT/'fixture_cad.zip') as z:assert z.testzip() is None
-    print('FreeCAD model, single-part STL, report and ZIP complete.')
+    with zipfile.ZipFile(archive) as z:assert z.testzip() is None
+    print(f'FreeCAD {args.variant} model, {r["printed_part_count"]} printable STL(s), report and ZIP complete.')
 
 
 if __name__=='__main__':main()

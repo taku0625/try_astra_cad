@@ -1,0 +1,475 @@
+{
+  "engine": "FreeCAD 1.0.0",
+  "status": "PROVISIONAL carbon-pipe mount; confirm collar drawing and pipe dimensions before fabrication",
+  "printed_part_count": 2,
+  "variant": "split",
+  "printed_parts": {
+    "base": {
+      "volume_mm3": 121580.21210138465,
+      "stl_facets": 4884,
+      "stl_connected_components": 1,
+      "stl_closed_manifold": true,
+      "stl_z_min_mm": 0.0,
+      "stl_z_max_mm": 62.0,
+      "stl_rotation_x_deg": 0,
+      "dimensions_mm": [
+        145.0000001,
+        100.0,
+        62.0000001
+      ]
+    },
+    "lidar_adapter": {
+      "volume_mm3": 89375.73038845551,
+      "stl_facets": 3704,
+      "stl_connected_components": 1,
+      "stl_closed_manifold": true,
+      "stl_z_min_mm": -6.1232337864698064e-15,
+      "stl_z_max_mm": 36.74315643310547,
+      "stl_rotation_x_deg": 180,
+      "dimensions_mm": [
+        58.000000000000014,
+        100.0,
+        36.743157806499205
+      ]
+    }
+  },
+  "assembly_joint": {
+    "holes_xy": [
+      [
+        -20,
+        -44.5
+      ],
+      [
+        10,
+        -44.5
+      ],
+      [
+        -20,
+        44.5
+      ],
+      [
+        10,
+        44.5
+      ]
+    ],
+    "clearance_diameter": 4.5,
+    "wing_x_min": -29.0,
+    "wing_x_max": 19.0,
+    "wing_inner_y": 28.0,
+    "wing_outer_y": 50.0,
+    "flange_thickness": 10.0,
+    "screw_diameter": 4.0,
+    "screw_length_under_head": 20.0,
+    "head_diameter": 7.0,
+    "head_height": 4.0,
+    "washer_od": 9.0,
+    "washer_id": 4.3,
+    "washer_thickness": 0.8,
+    "nut_across_flats": 7.0,
+    "nut_height": 3.2,
+    "nut_pocket_across_flats": 7.4,
+    "nut_pocket_depth": 3.5,
+    "hardware_basis": "M4x20 socket cap screws, 9x4.3x0.8 washers and standard M4 hex nuts AF7 H3.2; confirm actual hardware; pocket clearance is a starting value for PLA",
+    "contact_area_mm2": 5309.615632306217,
+    "nut_top_z_mm": -6.5,
+    "nut_bottom_z_mm": -9.7,
+    "screw_tip_z_mm": -11.2,
+    "screw_protrusion_below_nut_mm": 1.5,
+    "bearing_check": "PASS - four complete washer and nut seats",
+    "hardware_collision": "PASS - M4 hardware clear of prints, sensors, collar and pipe",
+    "access_check": "PASS - top driver and bottom nut insertion with LiDAR fitted",
+    "assembly_approach": "PASS - eight vertical offsets of adapter plus LiDAR",
+    "printed_part_overlap_mm3": 0.0
+  },
+  "fixture_valid_solid": true,
+  "stl_closed_manifold": true,
+  "stl_connected_components": 2,
+  "stl_facets": 8588,
+  "fixture_bounds_mm": {
+    "x": [
+      -114.0,
+      31.0
+    ],
+    "y": [
+      -50.0,
+      50.0
+    ],
+    "z": [
+      -36.74315780649917,
+      62.0
+    ]
+  },
+  "camera_forward_shift_mm": 22.0,
+  "interference_volume_mm3": {
+    "camera": 0.0,
+    "lidar": 0.0
+  },
+  "camera_orientation": {
+    "roll_about_forward_deg": 180.0,
+    "source_positive_z_global": [
+      0.0,
+      -1.2246467991473532e-16,
+      -1.0
+    ],
+    "seating_plane_z_source": 22.5,
+    "basis": "User-requested 180-degree roll correction; rear connector below optical axis"
+  },
+  "camera_connector_center_global_mm": [
+    5.600000000000001,
+    -5.4785017194915435e-15,
+    15.5
+  ],
+  "cable_opening_height_above_base_mm": 7.5,
+  "cable_base_relief_depth_mm": 0.5,
+  "cable_upward_extension_mm": 6.0,
+  "cable_opening_top_z_mm": 32.81370849898476,
+  "cable_approach": "PASS - nominal dia 16 profile swept upward 6 mm, clear from rear edge through plate; actual plug not supplied",
+  "camera_fastener": {
+    "diameter_mm": 1.6,
+    "spec_source": "User confirms M1.6, approximately 8 mm long excluding head",
+    "hole_diameter_mm": 1.8,
+    "length_under_head_mm": 8.0,
+    "through_length_mm": 4.0,
+    "insertion_without_washer_mm": 4.0,
+    "assumed_head_diameter_mm": 3.0,
+    "head_bearing": "PASS - full assumed dia 3.0 head annulus at all four holes",
+    "actual_insertion_limit_verified": false
+  },
+  "camera_assembly_approach": "PASS - exact sensor at 8 approach offsets along X; final rear contact and cable clearance",
+  "camera_back_hole_centers_global": [
+    [
+      5.600000000000005,
+      -12.500000000000002,
+      43.0
+    ],
+    [
+      5.600000000000005,
+      -12.500000000000005,
+      18.0
+    ],
+    [
+      5.599999999999998,
+      12.499999999999995,
+      18.0
+    ],
+    [
+      5.599999999999998,
+      12.499999999999998,
+      43.0
+    ]
+  ],
+  "camera_foot_area_mm2": 667.9645183811328,
+  "camera_supported_area_mm2": 667.9645183811328,
+  "camera_support_fraction": 1.0,
+  "lidar_mount_rotation_z_deg": 90.0,
+  "lidar_mount_rotation_y_deg": -30.0,
+  "lidar_mount_center_mm": [
+    0.0,
+    0.0,
+    -20.0
+  ],
+  "lidar_mount_hole_centers_xy": [
+    [
+      15.588457268119885,
+      -24.0
+    ],
+    [
+      -15.588457268119893,
+      -23.999999999999993
+    ],
+    [
+      15.588457268119893,
+      23.999999999999993
+    ],
+    [
+      -15.588457268119885,
+      24.0
+    ]
+  ],
+  "lidar_mount_hole_centers_xyz": [
+    [
+      15.588457268119885,
+      -24.0,
+      -10.999999999999996
+    ],
+    [
+      -15.588457268119893,
+      -23.999999999999993,
+      -29.00000000000001
+    ],
+    [
+      15.588457268119893,
+      23.999999999999993,
+      -10.99999999999999
+    ],
+    [
+      -15.588457268119885,
+      24.0,
+      -29.000000000000004
+    ]
+  ],
+  "lidar_supported_area_mm2": 3903.146484579809,
+  "lidar_mount_face_area_mm2": 3917.440731153607,
+  "lidar_source_hole_alignment": "PASS - all four actual STEP hole centers match rotated bores",
+  "lidar_screw_insertion_mm": 3.5,
+  "lidar_screw_bearing": "PASS - four perpendicular seats and unobstructed M3 shafts",
+  "lidar_assembly_approach": "PASS - eight offsets along tilted mounting normal",
+  "lidar_screw_access": "PASS - fasten LiDAR to detached adapter before joining base",
+  "directions": {
+    "camera_forward": [
+      1.0,
+      2.220446049250313e-16,
+      -2.465190328815662e-32
+    ],
+    "lidar_scan": [
+      0.5000000000000003,
+      0.0,
+      -0.8660254037844386
+    ],
+    "camera_cable": [
+      -1.0,
+      -2.220446049250313e-16,
+      2.465190328815662e-32
+    ],
+    "lidar_cable": [
+      -3.3306690738754696e-16,
+      -1.0000000000000002,
+      -1.6653345369377348e-16
+    ]
+  },
+  "fov": {
+    "assumption": "Entrance pupil at or forward of lens-barrel rear plane; all forward rays have nonnegative X direction",
+    "pupil_lower_bound_x": 34.9,
+    "fixture_max_x": 31.0,
+    "clearance_behind_plane_mm": 3.8999999999999986,
+    "claimed_horizontal_fov_deg": 176.0,
+    "entrance_pupil_verified": false,
+    "result": "PASS for fixture only under assumed forward hemisphere; tilted LiDAR may enter camera FOV",
+    "lidar_max_x_mm": 41.698550000000026,
+    "full_assembly_fov_verified": false
+  },
+  "fixture_volume_mm3": 210955.94249119714,
+  "pla_solid_mass_g_at_1_24": 261.5853686890845,
+  "holes": [
+    {
+      "type": "HOST",
+      "xy": [
+        -43,
+        -42
+      ],
+      "diameter": 5.7
+    },
+    {
+      "type": "HOST",
+      "xy": [
+        23,
+        -42
+      ],
+      "diameter": 5.7
+    },
+    {
+      "type": "HOST",
+      "xy": [
+        -43,
+        42
+      ],
+      "diameter": 5.7
+    },
+    {
+      "type": "HOST",
+      "xy": [
+        23,
+        42
+      ],
+      "diameter": 5.7
+    },
+    {
+      "type": "LIDAR",
+      "xy": [
+        15.588457268119885,
+        -24.0
+      ],
+      "xyz": [
+        15.588457268119885,
+        -24.0,
+        -10.999999999999996
+      ],
+      "axis": [
+        -0.5000000000000004,
+        0.0,
+        0.8660254037844384
+      ],
+      "diameter": 3.6,
+      "counterbore": 6.8,
+      "seat_thickness": 4.5,
+      "seat_xyz": [
+        13.338457268119884,
+        -24.0,
+        -7.102885682970024
+      ]
+    },
+    {
+      "type": "LIDAR",
+      "xy": [
+        -15.588457268119893,
+        -23.999999999999993
+      ],
+      "xyz": [
+        -15.588457268119893,
+        -23.999999999999993,
+        -29.00000000000001
+      ],
+      "axis": [
+        -0.5000000000000004,
+        0.0,
+        0.8660254037844384
+      ],
+      "diameter": 3.6,
+      "counterbore": 6.8,
+      "seat_thickness": 4.5,
+      "seat_xyz": [
+        -17.838457268119896,
+        -23.999999999999993,
+        -25.102885682970037
+      ]
+    },
+    {
+      "type": "LIDAR",
+      "xy": [
+        15.588457268119893,
+        23.999999999999993
+      ],
+      "xyz": [
+        15.588457268119893,
+        23.999999999999993,
+        -10.99999999999999
+      ],
+      "axis": [
+        -0.5000000000000004,
+        0.0,
+        0.8660254037844384
+      ],
+      "diameter": 3.6,
+      "counterbore": 6.8,
+      "seat_thickness": 4.5,
+      "seat_xyz": [
+        13.33845726811989,
+        23.999999999999993,
+        -7.102885682970017
+      ]
+    },
+    {
+      "type": "LIDAR",
+      "xy": [
+        -15.588457268119885,
+        24.0
+      ],
+      "xyz": [
+        -15.588457268119885,
+        24.0,
+        -29.000000000000004
+      ],
+      "axis": [
+        -0.5000000000000004,
+        0.0,
+        0.8660254037844384
+      ],
+      "diameter": 3.6,
+      "counterbore": 6.8,
+      "seat_thickness": 4.5,
+      "seat_xyz": [
+        -17.83845726811989,
+        24.0,
+        -25.10288568297003
+      ]
+    },
+    {
+      "type": "JOINT",
+      "xy": [
+        -20,
+        -44.5
+      ],
+      "diameter": 4.5
+    },
+    {
+      "type": "JOINT",
+      "xy": [
+        10,
+        -44.5
+      ],
+      "diameter": 4.5
+    },
+    {
+      "type": "JOINT",
+      "xy": [
+        -20,
+        44.5
+      ],
+      "diameter": 4.5
+    },
+    {
+      "type": "JOINT",
+      "xy": [
+        10,
+        44.5
+      ],
+      "diameter": 4.5
+    }
+  ],
+  "printing": {
+    "process": "FDM",
+    "material": "PLA",
+    "nozzle_mm": 0.4,
+    "layer_height_mm": 0.2,
+    "wall_count": 5,
+    "top_bottom_layers": 6,
+    "infill_percent": 40,
+    "infill_pattern": "gyroid",
+    "orientation": "base.stl: underside on bed. lidar_adapter.stl: pre-rotated 180 degrees about X so its Z=0 base-contact face is on the bed. Both STLs have minimum Z=0.",
+    "supports": "Inspect angled M3 channels, downward-facing hex pockets and camera cable opening in slicer; remove supports before assembly. No slicer/G-code validation performed.",
+    "brim_mm": 5
+  },
+  "unresolved": [
+    "Exact entrance pupil and vertical/diagonal FOV; confirm actual full-frame image",
+    "PLA heating/creep, load and vibration under operating conditions",
+    "Camera M1.6 confirmed by user; manufacturer insertion limit and actual screw head dimensions still unverified",
+    "MID-360 thread, insertion limit and inverted operation",
+    "Mating cable plug dimensions/bends and host support",
+    "Pipe OD assumed 25 mm; confirm actual OD and wall thickness",
+    "SCS2512CN2 collar dimensions, axial mounting holes, fastener size/depth and clamping torque unverified; reference envelope is not manufacturer CAD",
+    "Rear cantilever strength and single-collar resistance to rotation/slip unverified"
+  ],
+  "source_sha256": {
+    "camera": "220a4cd902959a2154054680a6834b6826a77bc83f53de7b971f4fc7a09b23d2",
+    "lidar": "b93e9b51282ed319b6aa755e76a132c0eb03306da5f3b9676bcabf2e2ae25f02"
+  },
+  "pipe_mount": {
+    "status": "PROVISIONAL: SCS2512CN2 mounting dimensions and pipe OD are unverified",
+    "product": "SCS2512CN2",
+    "quantity": 1,
+    "pipe_od": 25.0,
+    "pipe_id_reference": 21.0,
+    "pipe_top_z": 0.0,
+    "pipe_length_reference": 120.0,
+    "center_x": -85.0,
+    "center_y": 0.0,
+    "slot_pitch_min": 34.0,
+    "slot_pitch_max": 40.0,
+    "slot_width": 5.5,
+    "collar_od_reference": 45.0,
+    "collar_height_reference": 12.0,
+    "reference_url": "https://jp.misumi-ec.com/vona2/detail/221004989375/?HissuCode=SCS2512CN2",
+    "construction": "Integrated in the continuous 8 mm base; flat underside Z=0",
+    "mounting_dimensions_verified": false,
+    "pipe_od_verified": false,
+    "reference_collision_check": "PASS - provisional envelopes only",
+    "slot_and_tool_access": "PASS - M5 shaft at pitch 34 and 40 mm",
+    "minimum_slot_pipe_ligament_mm": 1.4499999999999993
+  },
+  "integrated_base": "PASS - two separate printed solids bolted across the Z=0 interface",
+  "parameters_sha256": "92b0435c326a8337c7b3a270d9150b2c1993fd3bed61978c8f882f0df0b10071",
+  "model_script_sha256": "cba5a621e1f9ec29ec325eecea23eb539d7312d10095d3a62d4d8735c8d48fcb",
+  "STL_roundtrip": "PASS - each reimported STL is a closed manifold with one connected component",
+  "FCStd_reopen_parameter_edit": "PASS - reopen, change back plate thickness +1 mm, recompute, restore",
+  "STEP_roundtrip": "PASS - each part is a valid single solid with preserved volume"
+}

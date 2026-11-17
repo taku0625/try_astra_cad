@@ -117,5 +117,56 @@
     "collar_height_reference": 12.0,
     "reference_url": "https://jp.misumi-ec.com/vona2/detail/221004989375/?HissuCode=SCS2512CN2",
     "construction": "Integrated in the continuous 8 mm base; flat underside Z=0"
+  },
+  "assembly_joint": {
+    "holes_xy": [
+      [
+        -20,
+        -44.5
+      ],
+      [
+        10,
+        -44.5
+      ],
+      [
+        -20,
+        44.5
+      ],
+      [
+        10,
+        44.5
+      ]
+    ],
+    "clearance_diameter": 4.5,
+    "wing_x_min": -29.0,
+    "wing_x_max": 19.0,
+    "wing_inner_y": 28.0,
+    "wing_outer_y": 50.0,
+    "flange_thickness": 10.0,
+    "screw_diameter": 4.0,
+    "screw_length_under_head": 20.0,
+    "head_diameter": 7.0,
+    "head_height": 4.0,
+    "washer_od": 9.0,
+    "washer_id": 4.3,
+    "washer_thickness": 0.8,
+    "nut_across_flats": 7.0,
+    "nut_height": 3.2,
+    "nut_pocket_across_flats": 7.4,
+    "nut_pocket_depth": 3.5,
+    "hardware_basis": "M4x20 socket cap screws, 9x4.3x0.8 washers and standard M4 hex nuts AF7 H3.2; confirm actual hardware; pocket clearance is a starting value for PLA"
+  },
+  "assembly_printing": {
+    "process": "FDM",
+    "material": "PLA",
+    "nozzle_mm": 0.4,
+    "layer_height_mm": 0.2,
+    "wall_count": 5,
+    "top_bottom_layers": 6,
+    "infill_percent": 40,
+    "infill_pattern": "gyroid",
+    "orientation": "base.stl: underside on bed. lidar_adapter.stl: pre-rotated 180 degrees about X so its Z=0 base-contact face is on the bed. Both STLs have minimum Z=0.",
+    "supports": "Inspect angled M3 channels, downward-facing hex pockets and camera cable opening in slicer; remove supports before assembly. No slicer/G-code validation performed.",
+    "brim_mm": 5
   }
 }

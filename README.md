@@ -1,6 +1,14 @@
-# C2 / MID-360 一体型PLA治具 — LiDAR Y軸 −30°取付
+# C2 / MID-360 治具 — 一体型と分割アセンブリ版
 
-最新：**[STL](output/fixture.stl)** ／ **[STEP](output/fixture.step)** ／ **[FreeCAD](output/fixture.FCStd)** ／ **[図面PDF](output/review_drawing.pdf)** ／ **[一括ZIP](fixture_cad.zip)**。
+**分割アセンブリ版を追加しました。** 共通台座と30°LiDARアダプターを別々に印刷し、M4ボルト4本で組み立てます。LiDARを先にアダプターへ取り付けてから台座へ固定します。
+
+[取付手順・分解図](ASSEMBLY.md) ／ [台座STL](output/split_assembly/base.stl) ／ [アダプターSTL](output/split_assembly/lidar_adapter.stl) ／ [組立FreeCAD](output/split_assembly/assembly.FCStd) ／ [組立STEP](output/split_assembly/assembly.step) ／ [アセンブリ版ZIP](fixture_assembly_cad.zip)
+
+分割版は `python cad/build.py --variant split` で生成します。出力は `output/split_assembly/`。**以下は既存の一体型の説明**で、生成物も残しています。分割版の印刷・金具・組立手順は [ASSEMBLY.md](ASSEMBLY.md) を使ってください。
+
+## 一体型PLA治具 — LiDAR Y軸 −30°取付
+
+一体型：**[STL](output/fixture.stl)** ／ **[STEP](output/fixture.step)** ／ **[FreeCAD](output/fixture.FCStd)** ／ **[図面PDF](output/review_drawing.pdf)** ／ **[一括ZIP](fixture_cad.zip)**。
 
 既存のMID-360のZ軸回り+90°回転を維持したうえで、**組立座標のY軸回りに−30°**傾けました。+Xはカメラ前方、+Zは上です。LiDARの向きは下向きから前方へ30°傾き、走査軸方向は **(+0.5, 0, −0.866025)**、ケーブルは−Y側です。カメラの姿勢・位置、パイプ中心は維持しています。
 

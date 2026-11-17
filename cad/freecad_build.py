@@ -1,4 +1,5 @@
-"""Build a native, editable FreeCAD document and the single printable fixture."""
+"""Build the native fixture: integrated or a bolted two-part assembly."""
+import argparse
 import hashlib
 import json
 import math
@@ -15,14 +16,20 @@ import Mesh
 import MeshPart
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT/'output'
+parser=argparse.ArgumentParser()
+parser.add_argument('--variant',choices=['integrated','split'],default='integrated')
+args=parser.parse_args()
+SPLIT=args.variant=='split'
+OUT = ROOT/'output'/('split_assembly' if SPLIT else '')
+CACHE = ROOT/'.cache'/('render-meshes-split.json' if SPLIT else 'render-meshes.json')
 P = json.loads((ROOT/'cad/parameters.json').read_text())
 V = App.Vector
-D = App.newDocument('SinglePrintedFixture')
+D = App.newDocument('SplitFixtureAssembly' if SPLIT else 'SinglePrintedFixture')
 S = D.addObject('Spreadsheet::Sheet', 'Parameters')
 S.Label = 'Editable dimensions (mm)'
 B,C,L,R = P['plate'],P['camera'],P['lidar'],P['rear_bracket']
 M=P['pipe_mount']
+J=P['assembly_joint'] if SPLIT else None
 lidar_yaw=App.Rotation(V(0,0,1),L['mount_rotation_z_deg'])
 lidar_pitch=App.Rotation(V(0,1,0),L['mount_rotation_y_deg'])
 lidar_mount_rotation=lidar_pitch.multiply(lidar_yaw)
@@ -99,14 +106,23 @@ for i,y in enumerate(['-Parameters.BackW/2','Parameters.BackW/2-Parameters.Brace
 # Native box/boolean wedge: horizontal top overlaps the base; bottom is the
 # LiDAR mating plane. The same rigid transform drives sensor and fasteners.
 wedge_bottom=L['mount_center_z']-abs(math.tan(math.radians(L['mount_rotation_y_deg'])))*L['wedge_length_x']/2-1
-wedge_stock=box('LiDARWedgeStock',L['wedge_length_x'],L['wedge_width_y'],1-wedge_bottom,
+wedge_stock=box('LiDARWedgeStock',L['wedge_length_x'],L['wedge_width_y'],(0 if SPLIT else 1)-wedge_bottom,
                 -L['wedge_length_x']/2,-L['wedge_width_y']/2,wedge_bottom)
+if SPLIT:
+    wings=[]
+    for i,sign in enumerate([-1,1]):
+        y=J['wing_inner_y'] if sign>0 else -J['wing_outer_y']
+        wings.append(box(f'JointWing{i}',J['wing_x_max']-J['wing_x_min'],
+                         J['wing_outer_y']-J['wing_inner_y'],J['flange_thickness'],
+                         J['wing_x_min'],y,-J['flange_thickness']))
+    wedge_stock=fuse('AdapterStock',[wedge_stock,*wings])
 clip_origin=lidar_mount_origin+lidar_pitch.multVec(V(-150,-150,-150))
 wedge_clip=box('LiDARPlaneTrim',300,300,150,clip_origin.x,clip_origin.y,clip_origin.z)
 wedge_clip.Placement=App.Placement(clip_origin,lidar_pitch)
 wedge=primitive('Part::Cut','LiDARTiltWedge');wedge.Base=wedge_stock;wedge.Tool=wedge_clip;wedge.Refine=True
-stock=fuse('OnePieceStock',[base,back,*braces,wedge])
+stock=fuse('BaseStock' if SPLIT else 'OnePieceStock',[base,back,*braces]+([] if SPLIT else [wedge]))
 tools=[];holes=[]
+lidar_tools=[]
 tools.append(cyl('PipeClearance','(Parameters.PipeOD+0.6 mm)/2','Parameters.BaseT+2 mm',
                  'Parameters.PipeX','Parameters.PipeY',-1))
 # Two radial slots for a provisional axial two-hole attachment. Not certified product dimensions.
@@ -129,10 +145,10 @@ for x in [-L['hole_pitch_x']/2,L['hole_pitch_x']/2]:
 for i,pt in enumerate(lidar_hole_centers):
     bore_start=pt-lidar_normal
     seat=pt+lidar_normal*L['screw_seat_thickness']
-    tools.append(cyl(f'LiDARHole{i}',L['clearance_diameter']/2,L['screw_seat_thickness']+2,
+    lidar_tools.append(cyl(f'LiDARHole{i}',L['clearance_diameter']/2,L['screw_seat_thickness']+2,
                      bore_start.x,bore_start.y,bore_start.z,lidar_hole_rotation))
     # Deep head/driver channel; its flat bottom is perpendicular to the screw.
-    tools.append(cyl(f'LiDARCounterbore{i}',L['counterbore_diameter']/2,100,
+    lidar_tools.append(cyl(f'LiDARCounterbore{i}',L['counterbore_diameter']/2,100,
                      seat.x,seat.y,seat.z,lidar_hole_rotation))
     holes.append(dict(type='LIDAR',xy=[pt.x,pt.y],xyz=list(pt),axis=list(lidar_normal),
                       diameter=L['clearance_diameter'],counterbore=L['counterbore_diameter'],
@@ -165,12 +181,35 @@ clip=box('CableRoofClip','Parameters.BackT+2 mm','2*Parameters.CableD','Paramete
          'Parameters.BaseT+Parameters.CableZ+Parameters.CableUp+Parameters.CableD/(2*sqrt(2))')
 roof=primitive('Part::Common','CableTeardropRoof');roof.Base=diamond;roof.Tool=clip;roof.Refine=True
 tools.extend([cable,upper_cable,slot,roof])
+if SPLIT:
+    adapter_tools=list(lidar_tools)
+    for i,(x,y) in enumerate(J['holes_xy']):
+        tools.append(cyl(f'JointBaseHole{i}',J['clearance_diameter']/2,'Parameters.BaseT+2 mm',x,y,-1))
+        adapter_tools.append(cyl(f'JointAdapterHole{i}',J['clearance_diameter']/2,
+                                 J['flange_thickness']+2,x,y,-J['flange_thickness']-1))
+        pocket=primitive('Part::Prism',f'JointNutPocket{i}');pocket.Polygon=6
+        pocket.Circumradius=J['nut_pocket_across_flats']/math.sqrt(3)
+        pocket.Height=J['nut_pocket_depth']+1
+        place(pocket,x,y,-J['flange_thickness']-1)
+        adapter_tools.append(pocket)
+        holes.append(dict(type='JOINT',xy=[x,y],diameter=J['clearance_diameter']))
+    adapter_cutters=fuse('AdapterOpenings',adapter_tools)
+    adapter=primitive('Part::Cut','LiDARAdapter');adapter.Base=wedge;adapter.Tool=adapter_cutters;adapter.Refine=True
+    adapter.Label='PRINT 2 - 30 degree LiDAR adapter'
+else:
+    tools.extend(lidar_tools)
 cutters=fuse('ClearanceOpenings',tools)
-fixture=primitive('Part::Cut','PrintableFixture');fixture.Base=stock;fixture.Tool=cutters;fixture.Refine=True
-fixture.Label='ONE PRINTED PART - PLA'
+fixture=primitive('Part::Cut','PrintableBase' if SPLIT else 'PrintableFixture');fixture.Base=stock;fixture.Tool=cutters;fixture.Refine=True
+fixture.Label='PRINT 1 - common base' if SPLIT else 'ONE PRINTED PART - PLA'
 D.recompute()
-assert not fixture.Shape.isNull(), 'FreeCAD feature recompute failed'
-assert fixture.Shape.isValid() and len(fixture.Shape.Solids)==1, 'Fixture must be one valid solid'
+print_parts=[('base',fixture),('lidar_adapter',adapter)] if SPLIT else [('fixture',fixture)]
+for name,obj in print_parts:
+    assert not obj.Shape.isNull() and obj.Shape.isValid() and len(obj.Shape.Solids)==1, (name,'must be one valid solid')
+if SPLIT:
+    # Tight bounds matter for trimmed, oblique cylinders; OCCT face tolerances
+    # can pad a planar bound by 1e-7 mm even though its vertices are at Z=0.
+    assert abs(fixture.Shape.optimalBoundingBox().ZMin)<1e-6 and abs(adapter.Shape.optimalBoundingBox().ZMax)<1e-6
+    assert fixture.Shape.common(adapter.Shape).Volume<1e-5, 'Printed parts overlap'
 
 # User STEP geometry: camera rolled 180 degrees about +X, rear connector low.
 # MID-360 yaw is followed by assembly Y pitch, about its mounting center.
@@ -189,6 +228,7 @@ for name,key in [('Camera','camera'),('MID360','lidar')]:
 D.recompute()
 for o in features:o.Visibility=False
 fixture.Visibility=True
+if SPLIT:adapter.Visibility=True
 for o in refs.values():o.Visibility=True
 S.Visibility=False
 
@@ -207,7 +247,7 @@ for name,outer,inner,z,height in [
 D.recompute()
 
 # Native geometry and fabrication checks.
-shape=fixture.Shape
+shape=fixture.Shape.fuse(adapter.Shape).removeSplitter() if SPLIT else fixture.Shape
 interferences={k:shape.common(o.Shape).Volume for k,o in refs.items()}
 for o in mount_refs:
     assert shape.common(o.Shape).Volume<1e-5, ('Mount interference',o.Name)
@@ -328,7 +368,10 @@ for h in holes:
     if h['type']=='LIDAR':
         pt=V(*h['xyz']);seat=V(*h['seat_xyz'])
         probe=Part.makeCylinder(2.75,90,seat,lidar_normal)
-        assert shape.common(probe).Volume<1e-5,('Blocked angled LiDAR screw access',h)
+        # On the split version, fasten the LiDAR BEFORE bolting the adapter to
+        # the base: the base intentionally covers the angled access channels.
+        access_shape=adapter.Shape if SPLIT else shape
+        assert access_shape.common(probe).Volume<1e-5,('Blocked angled LiDAR screw access',h)
         shaft=Part.makeCylinder(1.5,L['screw_length_under_head'],seat,-lidar_normal)
         assert shape.common(shaft).Volume<1e-5,('Blocked M3 shaft',h)
         bearing=Part.makeCylinder(2.75,0.2,seat-lidar_normal*0.2,lidar_normal).cut(
@@ -337,18 +380,125 @@ for h in holes:
 for offset in [0.25,1,3,6,10,20,40,80]:
     moved=refs['lidar'].Shape.copy();moved.translate(-lidar_normal*offset)
     assert shape.common(moved).Volume<1e-5,('LiDAR installation approach blocked',offset)
-mesh=MeshPart.meshFromShape(Shape=shape,LinearDeflection=.06,AngularDeflection=.18,Relative=False)
-assert mesh.isSolid() and not mesh.hasNonManifolds() and mesh.countComponents()==1
-assert not mesh.hasNonUniformOrientedFacets()
-OUT.mkdir(exist_ok=True)
-mesh.write(str(OUT/'fixture.stl'))
-stl_check=Mesh.Mesh(str(OUT/'fixture.stl'))
-assert stl_check.isSolid() and stl_check.countComponents()==1 and not stl_check.hasNonManifolds()
-Part.export([fixture],str(OUT/'fixture.step'))
-Part.export([fixture,*refs.values(),*mount_refs],str(OUT/'assembly.step'))
-D.recompute();D.saveAs(str(OUT/'fixture.FCStd'))
-report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'printed_part_count':1,
-        'fixture_valid_solid':True,'stl_closed_manifold':True,'stl_connected_components':1,'stl_facets':mesh.CountFacets,
+
+# Bought fasteners are reference envelopes, not printable parts or thread models.
+hardware=[];hardware_groups={}
+joint_report=None
+if SPLIT:
+    def hex_prism(across_flats,height,origin):
+        radius=across_flats/math.sqrt(3)
+        points=[origin+V(radius*math.cos(i*math.pi/3),radius*math.sin(i*math.pi/3),0) for i in range(6)]
+        return Part.Face(Part.makePolygon(points+[points[0]])).extrude(V(0,0,height))
+
+    def hardware_ref(name,group,s):
+        o=D.addObject('Part::Feature',name);o.Shape=s;o.Label='BOUGHT - '+name;o.Visibility=True
+        hardware.append(o);hardware_groups.setdefault(group,[]).append(o)
+        return o
+
+    # A solid/solid boolean common discards zero-thickness contact. Intersect
+    # the mating planar faces themselves to measure the real bearing area.
+    mating_faces=[]
+    for obj in [fixture,adapter]:
+        faces=[]
+        for face in obj.Shape.Faces:
+            fb=face.optimalBoundingBox()
+            if isinstance(face.Surface,Part.Plane) and abs(fb.ZMin)<1e-6 and abs(fb.ZMax)<1e-6:
+                faces.append(face)
+        mating_faces.append(faces)
+    joint_contact=sum(a.common(b).Area for a in mating_faces[0] for b in mating_faces[1])
+    assert joint_contact>3000, ('Insufficient base/adapter contact',joint_contact)
+    assert J['nut_pocket_depth']>J['nut_height']
+    assert J['nut_pocket_across_flats']>J['nut_across_flats']
+    nut_top=-J['flange_thickness']+J['nut_pocket_depth']
+    nut_bottom=nut_top-J['nut_height']
+    bolt_seat=B['thickness']+J['washer_thickness']
+    bolt_tip=bolt_seat-J['screw_length_under_head']
+    protrusion=nut_bottom-bolt_tip
+    assert 0.8<=protrusion<=3, ('Joint bolt must fully engage nut',protrusion)
+    for i,(x,y) in enumerate(J['holes_xy']):
+        washer=Part.makeCylinder(J['washer_od']/2,J['washer_thickness'],V(x,y,B['thickness'])).cut(
+            Part.makeCylinder(J['washer_id']/2,J['washer_thickness'],V(x,y,B['thickness'])))
+        hardware_ref(f'M4Washer{i}','washers',washer)
+        bolt=Part.makeCylinder(J['screw_diameter']/2,J['screw_length_under_head'],V(x,y,bolt_tip)).fuse(
+            Part.makeCylinder(J['head_diameter']/2,J['head_height'],V(x,y,bolt_seat)))
+        hardware_ref(f'M4Bolt{i}','bolts',bolt)
+        nut=hex_prism(J['nut_across_flats'],J['nut_height'],V(x,y,nut_bottom)).cut(
+            Part.makeCylinder(J['screw_diameter']/2,J['nut_height'],V(x,y,nut_bottom)))
+        hardware_ref(f'M4Nut{i}','nuts',nut)
+        # Full washer bearing above the base, and full nut bearing below the
+        # pocket roof (a genuine load path rather than only matching holes).
+        base_bearing=Part.makeCylinder(J['washer_od']/2,0.2,V(x,y,B['thickness']-.2)).cut(
+            Part.makeCylinder(J['clearance_diameter']/2,0.2,V(x,y,B['thickness']-.2)))
+        assert abs(fixture.Shape.common(base_bearing).Volume-base_bearing.Volume)<1e-5, ('Washer bearing',i)
+        nut_bearing=hex_prism(J['nut_across_flats'],.2,V(x,y,nut_top)).cut(
+            Part.makeCylinder(J['clearance_diameter']/2,.2,V(x,y,nut_top)))
+        assert abs(adapter.Shape.common(nut_bearing).Volume-nut_bearing.Volume)<1e-5, ('Nut bearing',i)
+        driver=Part.makeCylinder(J['head_diameter']/2,60,V(x,y,bolt_seat+J['head_height']))
+        assert shape.common(driver).Volume<1e-5, ('Joint driver blocked',i)
+        for sensor in refs.values():assert sensor.Shape.common(driver).Volume<1e-5, ('Sensor blocks joint driver',i)
+        # Nut insertion from below is possible with the sensor already fitted.
+        nut_sweep=hex_prism(J['nut_across_flats'],J['nut_height']+20,V(x,y,nut_bottom-20))
+        assert adapter.Shape.common(nut_sweep).Volume<1e-5, ('Nut insertion blocked',i)
+        for sensor in refs.values():assert sensor.Shape.common(nut_sweep).Volume<1e-5, ('Sensor blocks nut insertion',i)
+        bolt_sweep=Part.makeCylinder(J['head_diameter']/2,40,V(x,y,bolt_seat))
+        assert shape.common(bolt_sweep).Volume<1e-5, ('Bolt head insertion blocked',i)
+    # Part.makeCompound crashes in this FreeCAD 1.0/Python 3.13 build; the
+    # supported Part.Compound constructor preserves the same separate solids.
+    m4_hardware=Part.Compound([o.Shape for o in hardware])
+    assert shape.common(m4_hardware).Volume<1e-5, 'Joint hardware intersects printed parts'
+    for o in [*refs.values(),*mount_refs]:
+        assert o.Shape.common(m4_hardware).Volume<1e-5, ('Joint hardware collision',o.Name)
+    for i,pt in enumerate(lidar_hole_centers):
+        seat=pt+lidar_normal*L['screw_seat_thickness']
+        bolt=Part.makeCylinder(1.5,L['screw_length_under_head'],seat,-lidar_normal).fuse(
+            Part.makeCylinder(2.75,3,seat,lidar_normal))
+        assert shape.common(bolt).Volume<1e-5, ('LiDAR screw collides with base or adapter',i)
+        hardware_ref(f'M3LiDARScrew{i}','lidar_screws',bolt)
+    # The adapter with the attached LiDAR moves vertically up to the base.
+    subassembly=Part.Compound([adapter.Shape,refs['lidar'].Shape,
+                                 *[o.Shape for o in hardware_groups['lidar_screws']]])
+    for offset in [0.25,1,3,6,10,20,40,80]:
+        moved=subassembly.copy();moved.translate(V(0,0,-offset))
+        for fixed in [fixture,*mount_refs,refs['camera']]:
+            assert fixed.Shape.common(moved).Volume<1e-5, ('Adapter assembly approach blocked',offset,fixed.Name)
+    joint_report=dict(J,contact_area_mm2=joint_contact,nut_top_z_mm=nut_top,nut_bottom_z_mm=nut_bottom,
+                      screw_tip_z_mm=bolt_tip,screw_protrusion_below_nut_mm=protrusion,
+                      bearing_check='PASS - four complete washer and nut seats',
+                      hardware_collision='PASS - M4 hardware clear of prints, sensors, collar and pipe',
+                      access_check='PASS - top driver and bottom nut insertion with LiDAR fitted',
+                      assembly_approach='PASS - eight vertical offsets of adapter plus LiDAR',
+                      printed_part_overlap_mm3=fixture.Shape.common(adapter.Shape).Volume)
+
+OUT.mkdir(parents=True,exist_ok=True)
+part_reports={}
+part_volumes={obj.Name:obj.Shape.Volume for _,obj in print_parts}
+for name,obj in print_parts:
+    mesh=MeshPart.meshFromShape(Shape=obj.Shape,LinearDeflection=.06,AngularDeflection=.18,Relative=False)
+    if SPLIT and name=='lidar_adapter':
+        # Put the broad base-contact face on the bed, without changing the CAD assembly.
+        mesh.transform(App.Placement(V(0,0,0),App.Rotation(V(1,0,0),180)).toMatrix())
+    assert mesh.isSolid() and not mesh.hasNonManifolds() and mesh.countComponents()==1
+    assert not mesh.hasNonUniformOrientedFacets()
+    if SPLIT:assert abs(mesh.BoundBox.ZMin)<1e-5, (name,'STL must be bed aligned')
+    mesh.write(str(OUT/f'{name}.stl'))
+    stl_check=Mesh.Mesh(str(OUT/f'{name}.stl'))
+    assert stl_check.isSolid() and stl_check.countComponents()==1 and not stl_check.hasNonManifolds()
+    assert not stl_check.hasNonUniformOrientedFacets()
+    Part.export([obj],str(OUT/f'{name}.step'))
+    # Ignore cached tessellation/deflection when reporting CAD dimensions.
+    bounds=obj.Shape.optimalBoundingBox(False,False)
+    part_reports[name]=dict(volume_mm3=obj.Shape.Volume,stl_facets=mesh.CountFacets,
+                           stl_connected_components=1,stl_closed_manifold=True,
+                           stl_z_min_mm=mesh.BoundBox.ZMin,stl_z_max_mm=mesh.BoundBox.ZMax,
+                           stl_rotation_x_deg=180 if SPLIT and name=='lidar_adapter' else 0,
+                           dimensions_mm=[bounds.XLength,bounds.YLength,bounds.ZLength])
+Part.export([*[o for _,o in print_parts],*refs.values(),*mount_refs,*hardware],str(OUT/'assembly.step'))
+native_path=OUT/('assembly.FCStd' if SPLIT else 'fixture.FCStd')
+D.recompute();D.saveAs(str(native_path))
+report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'printed_part_count':len(print_parts),
+        'variant':args.variant,'printed_parts':part_reports,'assembly_joint':joint_report,
+        'fixture_valid_solid':True,'stl_closed_manifold':True,'stl_connected_components':len(print_parts),
+        'stl_facets':sum(item['stl_facets'] for item in part_reports.values()),
         'fixture_bounds_mm':dict(x=[shape.BoundBox.XMin,shape.BoundBox.XMax],y=[shape.BoundBox.YMin,shape.BoundBox.YMax],z=[shape.BoundBox.ZMin,shape.BoundBox.ZMax]),
         'camera_forward_shift_mm':C['forward_offset'],'interference_volume_mm3':interferences,
         'camera_orientation':dict(roll_about_forward_deg=C['roll_about_forward_deg'],source_positive_z_global=list(cam_source_z),
@@ -377,7 +527,8 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
         'lidar_screw_insertion_mm':lidar_insertion,
         'lidar_screw_bearing':'PASS - four perpendicular seats and unobstructed M3 shafts',
         'lidar_assembly_approach':'PASS - eight offsets along tilted mounting normal',
-        'lidar_screw_access':'PASS - all four screws accessible before camera insertion',
+        'lidar_screw_access':('PASS - fasten LiDAR to detached adapter before joining base' if SPLIT
+                              else 'PASS - all four screws accessible before camera insertion'),
         'directions':dict(camera_forward=list(camdir),lidar_scan=list(liddir),camera_cable=list(camport),lidar_cable=list(lidport)),
         'fov':dict(assumption='Entrance pupil at or forward of lens-barrel rear plane; all forward rays have nonnegative X direction',
                    pupil_lower_bound_x=fov_plane,fixture_max_x=shape.BoundBox.XMax,clearance_behind_plane_mm=margin,
@@ -386,36 +537,46 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
                    lidar_max_x_mm=refs['lidar'].Shape.optimalBoundingBox().XMax,
                    full_assembly_fov_verified=False),
         'fixture_volume_mm3':shape.Volume,'pla_solid_mass_g_at_1_24':shape.Volume*0.00124,
-        'holes':holes,'printing':P['printing'],'unresolved':P['unresolved'],
+        'holes':holes,'printing':P['assembly_printing'] if SPLIT else P['printing'],'unresolved':P['unresolved'],
         'source_sha256':{k:hashlib.sha256((ROOT/'cad'/P[k]['reference_file']).read_bytes()).hexdigest() for k in refs}}
 report['pipe_mount']=dict(M, mounting_dimensions_verified=False, pipe_od_verified=False, reference_collision_check='PASS - provisional envelopes only', slot_and_tool_access='PASS - M5 shaft at pitch 34 and 40 mm', minimum_slot_pipe_ligament_mm=M['slot_pitch_min']/2-M['slot_width']/2-(M['pipe_od']+0.6)/2)
-report['integrated_base']=f"PASS - single solid, continuous base plus integral {L['mount_rotation_y_deg']:g} deg Y LiDAR wedge"
+report['integrated_base']=('PASS - two separate printed solids bolted across the Z=0 interface' if SPLIT else
+                          f"PASS - single solid, continuous base plus integral {L['mount_rotation_y_deg']:g} deg Y LiDAR wedge")
 report['parameters_sha256']=hashlib.sha256((ROOT/'cad/parameters.json').read_bytes()).hexdigest()
 report['model_script_sha256']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-report['STL_roundtrip']='PASS - reimported closed manifold, one connected component'
+report['STL_roundtrip']='PASS - each reimported STL is a closed manifold with one connected component'
 # Native-file reopen/recompute, including a genuine parameter edit and return to nominal.
+part_names=[(name,obj.Name) for name,obj in print_parts]
+hardware_names={key:[o.Name for o in objects] for key,objects in hardware_groups.items()}
+fixture_name=fixture.Name
 App.closeDocument(D.Name)
-D=App.openDocument(str(OUT/'fixture.FCStd'));D.recompute()
-assert D.PrintableFixture.Shape.isValid()
-assert abs(D.PrintableFixture.Shape.Volume-shape.Volume)<1e-5
+D=App.openDocument(str(native_path));D.recompute()
+for name,obj_name in part_names:
+    obj=D.getObject(obj_name)
+    assert obj.Shape.isValid() and len(obj.Shape.Solids)==1
+    assert abs(obj.Shape.Volume-part_volumes[obj_name])<1e-5
 old_back_volume=D.BackPlate.Shape.Volume
 cell=D.Parameters.getCellFromAlias('BackT');D.Parameters.set(cell,f"{values['BackT']+1} mm");D.recompute()
-assert D.PrintableFixture.Shape.isValid() and D.BackPlate.Shape.Volume>old_back_volume
+assert D.getObject(fixture_name).Shape.isValid() and D.BackPlate.Shape.Volume>old_back_volume
 assert abs(D.BackPlate.Length.Value-values['BackT']-1)<1e-6
 D.Parameters.set(cell,f"{values['BackT']} mm");D.recompute()
-assert abs(D.PrintableFixture.Shape.Volume-shape.Volume)<1e-5
+for name,obj_name in part_names:assert abs(D.getObject(obj_name).Shape.Volume-part_volumes[obj_name])<1e-5
 report['FCStd_reopen_parameter_edit']='PASS - reopen, change back plate thickness +1 mm, recompute, restore'
-step_check=Part.read(str(OUT/'fixture.step'))
-assert step_check.isValid() and len(step_check.Solids)==1
-assert math.isclose(step_check.Volume,shape.Volume,rel_tol=1e-7)
-report['STEP_roundtrip']='PASS - valid single solid, volume preserved'
+for name,obj_name in part_names:
+    step_check=Part.read(str(OUT/f'{name}.step'))
+    assert step_check.isValid() and len(step_check.Solids)==1
+    assert math.isclose(step_check.Volume,part_volumes[obj_name],rel_tol=1e-7)
+report['STEP_roundtrip']='PASS - each part is a valid single solid with preserved volume'
 (OUT/'validation.json').write_text(json.dumps(report,indent=2)+'\n')
 # Meshes for report rendering only. CAD geometry is built exclusively in FreeCAD.
 render={}
-for key,obj in [('fixture',D.PrintableFixture),('camera',D.Camera),('lidar',D.MID360),('collar',D.CollarEnvelope),('pipe',D.CarbonPipeEnvelope)]:
-    vs,ts=obj.Shape.tessellate(.2)
+render_shapes=[(name,D.getObject(obj_name).Shape) for name,obj_name in part_names]
+render_shapes += [(key,obj.Shape) for key,obj in [('camera',D.Camera),('lidar',D.MID360),('collar',D.CollarEnvelope),('pipe',D.CarbonPipeEnvelope)]]
+render_shapes += [(key,Part.Compound([D.getObject(name).Shape for name in names])) for key,names in hardware_names.items()]
+for key,render_shape in render_shapes:
+    vs,ts=render_shape.tessellate(.2)
     render[key]={'vertices':[list(v) for v in vs],'triangles':ts}
 (ROOT/'.cache').mkdir(exist_ok=True)
-(ROOT/'.cache/render-meshes.json').write_text(json.dumps(render))
+CACHE.write_text(json.dumps(render))
 App.closeDocument(D.Name)
 print(json.dumps(report,indent=2))
