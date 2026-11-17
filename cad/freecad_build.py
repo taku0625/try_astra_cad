@@ -24,6 +24,14 @@ S.Label = 'Editable dimensions (mm)'
 B,C,L,R = P['plate'],P['camera'],P['lidar'],P['rear_bracket']
 M=P['pipe_mount']
 lidar_yaw=App.Rotation(V(0,0,1),L['mount_rotation_z_deg'])
+lidar_pitch=App.Rotation(V(0,1,0),L['mount_rotation_y_deg'])
+lidar_mount_rotation=lidar_pitch.multiply(lidar_yaw)
+lidar_mount_origin=V(0,0,L['mount_center_z'])
+lidar_normal=lidar_pitch.multVec(V(0,0,1))
+lidar_hole_rotation=App.Rotation(V(0,0,1),lidar_normal)
+assert -60 < L['mount_rotation_y_deg'] < 0, 'Wedge supports negative assembly Y pitch between -60 and 0 degrees'
+assert L['screw_seat_thickness'] > 0
+assert L['mount_center_z']+abs(math.tan(math.radians(L['mount_rotation_y_deg'])))*L['wedge_length_x']/2 < -1, 'Keep tilted mount below base'
 camera_rotation=App.Rotation(V(1,0,0),C['roll_about_forward_deg']).multiply(App.Rotation(V(0,0,1),-90))
 camera_seat_z=camera_rotation.multVec(V(0,0,C['seating_plane_z_source'])).z
 cable_z=camera_rotation.multVec(V(0,0,C['rear_connector_z_source'])).z-camera_seat_z
@@ -88,7 +96,16 @@ for i,y in enumerate(['-Parameters.BackW/2','Parameters.BackW/2-Parameters.Brace
     place(w,'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT+1 mm',y,'Parameters.BaseT-1 mm',App.Rotation(V(0,0,1),90))
     braces.append(w)
 # The enlarged rounded base includes the pipe mount at the same thickness and level.
-stock=fuse('OnePieceStock',[base,back,*braces])
+# Native box/boolean wedge: horizontal top overlaps the base; bottom is the
+# LiDAR mating plane. The same rigid transform drives sensor and fasteners.
+wedge_bottom=L['mount_center_z']-abs(math.tan(math.radians(L['mount_rotation_y_deg'])))*L['wedge_length_x']/2-1
+wedge_stock=box('LiDARWedgeStock',L['wedge_length_x'],L['wedge_width_y'],1-wedge_bottom,
+                -L['wedge_length_x']/2,-L['wedge_width_y']/2,wedge_bottom)
+clip_origin=lidar_mount_origin+lidar_pitch.multVec(V(-150,-150,-150))
+wedge_clip=box('LiDARPlaneTrim',300,300,150,clip_origin.x,clip_origin.y,clip_origin.z)
+wedge_clip.Placement=App.Placement(clip_origin,lidar_pitch)
+wedge=primitive('Part::Cut','LiDARTiltWedge');wedge.Base=wedge_stock;wedge.Tool=wedge_clip;wedge.Refine=True
+stock=fuse('OnePieceStock',[base,back,*braces,wedge])
 tools=[];holes=[]
 tools.append(cyl('PipeClearance','(Parameters.PipeOD+0.6 mm)/2','Parameters.BaseT+2 mm',
                  'Parameters.PipeX','Parameters.PipeY',-1))
@@ -107,13 +124,19 @@ for i,(x,y) in enumerate(B['host_holes_xy']):
 lidar_hole_centers=[]
 for x in [-L['hole_pitch_x']/2,L['hole_pitch_x']/2]:
     for y in [-L['hole_pitch_y']/2,L['hole_pitch_y']/2]:
-        pt=lidar_yaw.multVec(V(x,y,0))
-        lidar_hole_centers.append((round(pt.x,9),round(pt.y,9)))
-for i,(x,y) in enumerate(lidar_hole_centers):
-    tools.append(cyl(f'LiDARHole{i}',L['clearance_diameter']/2,'Parameters.BaseT+2 mm',x,y,-1))
-    tools.append(cyl(f'LiDARCounterbore{i}',L['counterbore_diameter']/2,L['counterbore_depth']+1,
-                     x,y,f"Parameters.BaseT-{L['counterbore_depth']} mm"))
-    holes.append(dict(type='LIDAR',xy=[x,y],diameter=L['clearance_diameter'],counterbore=L['counterbore_diameter'],depth=L['counterbore_depth']))
+        pt=lidar_mount_origin+lidar_mount_rotation.multVec(V(x,y,0))
+        lidar_hole_centers.append(pt)
+for i,pt in enumerate(lidar_hole_centers):
+    bore_start=pt-lidar_normal
+    seat=pt+lidar_normal*L['screw_seat_thickness']
+    tools.append(cyl(f'LiDARHole{i}',L['clearance_diameter']/2,L['screw_seat_thickness']+2,
+                     bore_start.x,bore_start.y,bore_start.z,lidar_hole_rotation))
+    # Deep head/driver channel; its flat bottom is perpendicular to the screw.
+    tools.append(cyl(f'LiDARCounterbore{i}',L['counterbore_diameter']/2,100,
+                     seat.x,seat.y,seat.z,lidar_hole_rotation))
+    holes.append(dict(type='LIDAR',xy=[pt.x,pt.y],xyz=list(pt),axis=list(lidar_normal),
+                      diameter=L['clearance_diameter'],counterbore=L['counterbore_diameter'],
+                      seat_thickness=L['screw_seat_thickness'],seat_xyz=list(seat)))
 # Rear camera fasteners: holes extracted from the source back-face loops.
 for i,(sy,sz) in enumerate([(-1,-1),(-1,1),(1,-1),(1,1)]):
     tools.append(cyl(f'CameraRearHole{i}','Parameters.CameraHoleD/2','Parameters.BackT+2 mm',
@@ -150,7 +173,7 @@ assert not fixture.Shape.isNull(), 'FreeCAD feature recompute failed'
 assert fixture.Shape.isValid() and len(fixture.Shape.Solids)==1, 'Fixture must be one valid solid'
 
 # User STEP geometry: camera rolled 180 degrees about +X, rear connector low.
-# MID-360 stays downward; yaw rotates its body and mounting holes together.
+# MID-360 yaw is followed by assembly Y pitch, about its mounting center.
 refs={}
 for name,key in [('Camera','camera'),('MID360','lidar')]:
     o=D.addObject('Part::Feature',name);o.Label='REFERENCE '+name
@@ -160,8 +183,8 @@ for name,key in [('Camera','camera'),('MID360','lidar')]:
         o.setExpression('Placement.Base.x','Parameters.CameraX')
         o.setExpression('Placement.Base.z','Parameters.BaseT-Parameters.CameraSeatZ')
     else:
-        r=lidar_yaw.multiply(App.Rotation(V(0,0,1),180).multiply(App.Rotation(V(1,0,0),-90)))
-        o.Placement=App.Placement(V(0,0,L['bottom_y_source']),r)
+        r=lidar_mount_rotation.multiply(App.Rotation(V(0,0,1),180).multiply(App.Rotation(V(1,0,0),-90)))
+        o.Placement=App.Placement(lidar_mount_origin+lidar_pitch.multVec(V(0,0,L['bottom_y_source'])),r)
     refs[key]=o
 D.recompute()
 for o in features:o.Visibility=False
@@ -190,8 +213,8 @@ for o in mount_refs:
     assert shape.common(o.Shape).Volume<1e-5, ('Mount interference',o.Name)
     for sensor in refs.values():
         assert o.Shape.common(sensor.Shape).Volume<1e-5, ('Reference collision',o.Name,sensor.Name)
-# One flat-bottom base, with a full-thickness bridge across the former stepped joint.
-assert abs(shape.BoundBox.ZMin)<1e-8
+# Continuous base retained, with an integral tilted mounting wedge below it.
+assert shape.BoundBox.ZMin < L['mount_center_z']
 bridge=Part.makeBox(1,10,B['thickness'],V(-60,20,0))
 assert abs(shape.common(bridge).Volume-bridge.Volume)<1e-5
 assert D.getObject('PipeMountPad') is None
@@ -213,8 +236,8 @@ liddir=refs['lidar'].Placement.Rotation.multVec(V(0,1,0))
 camport=refs['camera'].Placement.Rotation.multVec(V(0,-1,0))
 lidport=refs['lidar'].Placement.Rotation.multVec(V(1,0,0))
 cam_source_z=refs['camera'].Placement.Rotation.multVec(V(0,0,1))
-assert (camdir-V(1,0,0)).Length<1e-8 and (liddir-V(0,0,-1)).Length<1e-8
-assert (camport-V(-1,0,0)).Length<1e-8 and (lidport-lidar_yaw.multVec(V(-1,0,0))).Length<1e-8
+assert (camdir-V(1,0,0)).Length<1e-8 and (liddir-lidar_pitch.multVec(V(0,0,-1))).Length<1e-8
+assert (camport-V(-1,0,0)).Length<1e-8 and (lidport-lidar_mount_rotation.multVec(V(-1,0,0))).Length<1e-8
 assert (cam_source_z-V(0,0,-1)).Length<1e-8, 'Camera roll must put source +Z downward'
 connector=refs['camera'].Placement.multVec(V(0,C['rear_face_y_source'],C['rear_connector_z_source']))
 assert abs(connector.y)<1e-8 and abs(connector.z-(B['thickness']+cable_z))<1e-8
@@ -282,10 +305,38 @@ for dx in [0.25,1,3,6,10,20,40,80]:
 fov_plane=C['forward_offset']+C['lens_barrel_rear_x_source']
 margin=fov_plane-shape.BoundBox.XMax
 assert margin>=C['minimum_rear_margin'],('Forward clearance',margin)
+# Verify actual source mounting face and hole axes after the compound rotation.
+lidar_source=Part.read(str(ROOT/'cad'/L['reference_file']))
+lidar_source_holes=[]
+lidar_support_area=0.;lidar_face_area=0.
+for face in lidar_source.Faces:
+    bb=face.optimalBoundingBox()
+    if isinstance(face.Surface,Part.Plane) and abs(bb.YMin-L['bottom_y_source'])<1e-5 and abs(bb.YMax-L['bottom_y_source'])<1e-5:
+        placed=face.copy();placed.Placement=refs['lidar'].Placement
+        lidar_face_area+=placed.Area
+        lidar_support_area+=placed.common(shape).Area
+        for wire in face.Wires:
+            wb=wire.optimalBoundingBox()
+            if abs(abs(wb.Center.x)-L['hole_pitch_x']/2)<1e-4 and abs(abs(wb.Center.z)-L['hole_pitch_y']/2)<1e-4:
+                lidar_source_holes.append(refs['lidar'].Placement.multVec(wb.Center))
+assert len(lidar_source_holes)==4, ('LiDAR source mounting holes',len(lidar_source_holes))
+assert all(min((pt-q).Length for q in lidar_source_holes)<1e-4 for pt in lidar_hole_centers)
+assert lidar_face_area>3000 and lidar_support_area/lidar_face_area>0.95, ('LiDAR mounting face support',lidar_support_area,lidar_face_area)
+lidar_insertion=L['screw_length_under_head']-L['screw_seat_thickness']
+assert 0 < lidar_insertion <= 3.5, 'Confirm manufacturer thread depth before increasing insertion'
 for h in holes:
     if h['type']=='LIDAR':
-        x,y=h['xy'];probe=Part.makeCylinder(2.75,90,V(x,y,B['thickness']-L['counterbore_depth']))
-        assert shape.common(probe).Volume<1e-5,('Blocked LiDAR screw access',h)
+        pt=V(*h['xyz']);seat=V(*h['seat_xyz'])
+        probe=Part.makeCylinder(2.75,90,seat,lidar_normal)
+        assert shape.common(probe).Volume<1e-5,('Blocked angled LiDAR screw access',h)
+        shaft=Part.makeCylinder(1.5,L['screw_length_under_head'],seat,-lidar_normal)
+        assert shape.common(shaft).Volume<1e-5,('Blocked M3 shaft',h)
+        bearing=Part.makeCylinder(2.75,0.2,seat-lidar_normal*0.2,lidar_normal).cut(
+            Part.makeCylinder(L['clearance_diameter']/2,0.2,seat-lidar_normal*0.2,lidar_normal))
+        assert abs(shape.common(bearing).Volume-bearing.Volume)<1e-5,('Incomplete angled screw bearing',h)
+for offset in [0.25,1,3,6,10,20,40,80]:
+    moved=refs['lidar'].Shape.copy();moved.translate(-lidar_normal*offset)
+    assert shape.common(moved).Volume<1e-5,('LiDAR installation approach blocked',offset)
 mesh=MeshPart.meshFromShape(Shape=shape,LinearDeflection=.06,AngularDeflection=.18,Relative=False)
 assert mesh.isSolid() and not mesh.hasNonManifolds() and mesh.countComponents()==1
 assert not mesh.hasNonUniformOrientedFacets()
@@ -317,18 +368,28 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
         'camera_back_hole_centers_global':rear_global,'camera_foot_area_mm2':full_foot_area,
         'camera_supported_area_mm2':supported_area,'camera_support_fraction':supported_area/full_foot_area,
         'lidar_mount_rotation_z_deg':L['mount_rotation_z_deg'],
-        'lidar_mount_hole_centers_xy':lidar_hole_centers,
+        'lidar_mount_rotation_y_deg':L['mount_rotation_y_deg'],
+        'lidar_mount_center_mm':list(lidar_mount_origin),
+        'lidar_mount_hole_centers_xy':[[pt.x,pt.y] for pt in lidar_hole_centers],
+        'lidar_mount_hole_centers_xyz':[list(pt) for pt in lidar_hole_centers],
+        'lidar_supported_area_mm2':lidar_support_area,'lidar_mount_face_area_mm2':lidar_face_area,
+        'lidar_source_hole_alignment':'PASS - all four actual STEP hole centers match rotated bores',
+        'lidar_screw_insertion_mm':lidar_insertion,
+        'lidar_screw_bearing':'PASS - four perpendicular seats and unobstructed M3 shafts',
+        'lidar_assembly_approach':'PASS - eight offsets along tilted mounting normal',
         'lidar_screw_access':'PASS - all four screws accessible before camera insertion',
         'directions':dict(camera_forward=list(camdir),lidar_scan=list(liddir),camera_cable=list(camport),lidar_cable=list(lidport)),
         'fov':dict(assumption='Entrance pupil at or forward of lens-barrel rear plane; all forward rays have nonnegative X direction',
                    pupil_lower_bound_x=fov_plane,fixture_max_x=shape.BoundBox.XMax,clearance_behind_plane_mm=margin,
                    claimed_horizontal_fov_deg=C['horizontal_fov_assumed_deg'],entrance_pupil_verified=False,
-                   result='PASS for assumed forward hemisphere; verify actual image and full calibrated FOV'),
+                   result='PASS for fixture only under assumed forward hemisphere; tilted LiDAR may enter camera FOV',
+                   lidar_max_x_mm=refs['lidar'].Shape.optimalBoundingBox().XMax,
+                   full_assembly_fov_verified=False),
         'fixture_volume_mm3':shape.Volume,'pla_solid_mass_g_at_1_24':shape.Volume*0.00124,
         'holes':holes,'printing':P['printing'],'unresolved':P['unresolved'],
         'source_sha256':{k:hashlib.sha256((ROOT/'cad'/P[k]['reference_file']).read_bytes()).hexdigest() for k in refs}}
 report['pipe_mount']=dict(M, mounting_dimensions_verified=False, pipe_od_verified=False, reference_collision_check='PASS - provisional envelopes only', slot_and_tool_access='PASS - M5 shaft at pitch 34 and 40 mm', minimum_slot_pipe_ligament_mm=M['slot_pitch_min']/2-M['slot_width']/2-(M['pipe_od']+0.6)/2)
-report['integrated_base']='PASS - single solid, flat underside Z=0, full-thickness bridge across former joint'
+report['integrated_base']=f"PASS - single solid, continuous base plus integral {L['mount_rotation_y_deg']:g} deg Y LiDAR wedge"
 report['parameters_sha256']=hashlib.sha256((ROOT/'cad/parameters.json').read_bytes()).hexdigest()
 report['model_script_sha256']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 report['STL_roundtrip']='PASS - reimported closed manifold, one connected component'

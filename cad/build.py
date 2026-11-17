@@ -15,7 +15,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, Polygon
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -36,18 +36,18 @@ def render(p,r,meshes):
     b,c,k=p['plate'],p['camera'],p['rear_bracket']
     cx=c['forward_offset'];t=b['thickness'];back=cx+c['rear_face_y_source']
     f=plt.figure(figsize=(15,10),facecolor='white')
-    f.suptitle('FreeCAD | Integrated base + vertical pipe mount',x=.05,ha='left',fontsize=21,weight='bold')
+    f.suptitle('FreeCAD | MID-360 tilted mount: Y -30 degrees',x=.05,ha='left',fontsize=21,weight='bold')
     f.text(.05,.927,'25 mm PIPE ASSUMED / ONE COLLAR / PRODUCT MOUNTING DIMENSIONS UNVERIFIED',fontsize=11,color='#286678')
     ax=f.add_subplot(121,projection='3d')
     add_meshes(ax,meshes,['fixture','camera','lidar','collar','pipe'])
-    ax.set(xlim=(-120,65),ylim=(-60,60),zlim=(-125,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
-    ax.set_box_aspect((185,120,195));ax.view_init(elev=20,azim=35)
-    ax.set_title(f"Camera above | MID-360 down, Z rotation +{p['lidar']['mount_rotation_z_deg']:g} deg",fontsize=11)
+    ax.set(xlim=(-120,95),ylim=(-60,60),zlim=(-135,70),xlabel='X / forward (mm)',ylabel='Y (mm)',zlabel='Z (mm)')
+    ax.set_box_aspect((215,120,205));ax.view_init(elev=20,azim=35)
+    ax.set_title(f"MID-360: Z +{p['lidar']['mount_rotation_z_deg']:g} deg, then Y {p['lidar']['mount_rotation_y_deg']:g} deg",fontsize=11)
     ax=f.add_subplot(222,projection='3d')
     add_meshes(ax,meshes,['fixture'])
-    ax.set(xlim=(-120,35),ylim=(-55,55),zlim=(-10,68),xlabel='X',ylabel='Y',zlabel='Z')
-    ax.set_box_aspect((155,110,78));ax.view_init(elev=22,azim=155)
-    ax.set_title('One continuous base | pipe clearance + collar slots',fontsize=10.5)
+    ax.set(xlim=(-120,35),ylim=(-55,55),zlim=(-42,68),xlabel='X',ylabel='Y',zlabel='Z')
+    ax.set_box_aspect((155,110,110));ax.view_init(elev=22,azim=155)
+    ax.set_title('One part | integral 30-degree LiDAR mount',fontsize=10.5)
     ax=f.add_subplot(224)
     plane=r['fov']['pupil_lower_bound_x'];front=r['fov']['fixture_max_x']
     ax.axvspan(plane,75,facecolor='#dceee2',alpha=.75)
@@ -58,6 +58,20 @@ def render(p,r,meshes):
     ax.add_patch(Rectangle((cx-28.3,r['camera_connector_center_global_mm'][2]-3.75),11.9,7.5,facecolor=COLORS['camera']))
     ax.annotate('Rear connector LOW',xy=(cx-24,r['camera_connector_center_global_mm'][2]),
                 xytext=(-58,68),fontsize=8,color='#8c672c',arrowprops=dict(arrowstyle='->',color='#8c672c'))
+    l=p['lidar']
+    import math
+    half=l['wedge_length_x']/2
+    slope=-math.tan(math.radians(l['mount_rotation_y_deg']))
+    ax.add_patch(Polygon([(-half,0),(half,0),(half,l['mount_center_z']+slope*half),
+                          (-half,l['mount_center_z']-slope*half)],color=COLORS['fixture']))
+    angle=math.radians(l['mount_rotation_y_deg'])
+    # Side silhouette of the sensor envelope, schematic; assembly pane uses real STEP mesh.
+    def tilted(x,z):
+        return (math.cos(angle)*x+math.sin(angle)*z,l['mount_center_z']-math.sin(angle)*x+math.cos(angle)*z)
+    ax.add_patch(Polygon([tilted(x,z) for x,z in [(-32,0),(32,0),(32,-60),(-32,-60)]],
+                         facecolor=COLORS['lidar'],alpha=.55))
+    ax.annotate('Y -30 deg',xy=tilted(0,-35),xytext=(-55,-75),fontsize=9,
+                arrowprops=dict(arrowstyle='->',color=COLORS['lidar']))
     m=p['pipe_mount']
     ax.add_patch(Rectangle((m['center_x']-m['collar_od_reference']/2,-m['collar_height_reference']),m['collar_od_reference'],m['collar_height_reference'],color=COLORS['collar']))
     ax.add_patch(Rectangle((m['center_x']-m['pipe_od']/2,-42),m['pipe_od'],42,color=COLORS['pipe']))
@@ -67,7 +81,7 @@ def render(p,r,meshes):
     ax.text((plane+front)/2,-18,f"{r['fov']['clearance_behind_plane_mm']:.1f} mm",ha='center',fontsize=9,color='#38784c')
     ax.text(-53,-31,'Dashed plane = assumed pupil lower bound\nActual pupil / full FOV need image verification',fontsize=8,color='#5c6871')
     ax.annotate('+X',xy=(70,30.5),xytext=(58,30.5),fontsize=9,arrowprops=dict(arrowstyle='->'))
-    ax.set(xlim=(-120,75),ylim=(-42,77),title='SIDE | base supports camera (schematic)')
+    ax.set(xlim=(-120,75),ylim=(-100,77),title='SIDE | base supports camera (schematic)')
     ax.set_aspect('equal');ax.axis('off')
     f.text(.05,.074,f"Camera underside contact: {r['camera_supported_area_mm2']:.1f} / {r['camera_foot_area_mm2']:.1f} mm2 ({100*r['camera_support_fraction']:.1f}%)",fontsize=10.5)
     f.text(.05,.045,'Single PLA part + commercial screws. Confirm thread depth, mating plug, actual image and operating temperature.',fontsize=9,color='#a04428')
@@ -84,8 +98,8 @@ def render(p,r,meshes):
           f"Rear plate camera contact face X={back:g}; rear face X={back-k['thickness']:g}.",
           'Camera datum X=22 (8 mm rearward from previous X=30), Y=0; bottom Z=8.',
           'Camera roll: 180 deg about forward +X; source +Z points DOWN; rear connector below lens.',
-          'MID-360 datum XY=(0,0), mounting face Z=0, scan downward -Z.',
-          f"MID-360 Z rotation: +{p['lidar']['mount_rotation_z_deg']:g} deg from previous pose; camera cable -X, LiDAR cable -Y.",'',
+          f"MID-360 mount center (0,0,{p['lidar']['mount_center_z']:g}); assembly Y pitch {p['lidar']['mount_rotation_y_deg']:g} deg.",
+          f"Apply Z +{p['lidar']['mount_rotation_z_deg']:g} deg first, then Y {p['lidar']['mount_rotation_y_deg']:g} deg; LiDAR axis (+0.5,0,-0.866).",'',
           'CAMERA REAR ATTACHMENT:',
           f" 4 x dia {k['camera_clearance_diameter']:g} THRU, length {k['thickness']:g}, along X; Y=+/-12.5, Z=18/43 (25 x 25 pitch).",
           ' Source STEP rear face Y=-16.4: four entry loops diameter 2.57 at X/Z=+/-12.5.',
@@ -98,22 +112,22 @@ def render(p,r,meshes):
           'BASE HOLES:']
         for h in r['holes']:
             x,y=h['xy'];line=f" {h['type']:5s}: ({x:g},{y:g}), dia {h['diameter']:g} THRU"
-            if 'counterbore' in h:line+=f"; TOP counterbore dia {h['counterbore']:g} x {h['depth']:g} deep"
+            if 'counterbore' in h:line+=f"; Z={h['xyz'][2]:.2f}; angled dia {h['counterbore']:g} access, seat {h['seat_thickness']:g} thick"
             lines.append(line)
         lines += ['',
-          'PRINT: PLA; continuous flat base underside Z=0 on bed; print PrintableFixture only.',
+          'PRINT: PLA; tilted mount projects below Z=0. Select side-face orientation and supports in slicer.',
           ' 40% gyroid and 5 mm brim are starting values. Inspect overhangs/bridges in slicer.',
-          ' Start with supports off; inspect small horizontal screw holes and cable roof in slicer.',
+          ' Inspect angled head/driver channels, mount overhangs and small camera holes in slicer.',
           ' Temperature/speed follow filament and printer profiles. Deburr holes and contact faces.','',
           'ASSEMBLY:',
-          '1. Attach inverted LiDAR to base with 4 screws. M3x8 implies 3.5 mm insertion: verify limit.',
+          '1. Attach tilted LiDAR to wedge using 4 angled M3x8 screws, insertion 3.5 mm: verify limit.',
           '2. With rear connector LOW, rest camera on base; slide rearward into cable opening.',
           '3. Fasten 4 rear camera screws from -X. Verify thread, insertion and tightening torque.',
           '4. Connect cables. Attach host via 4 M5 clearance holes; keep LiDAR/cable volumes clear.','',
           f"CAMERA SUPPORT: {r['camera_supported_area_mm2']:.1f} of {r['camera_foot_area_mm2']:.1f} mm2 bottom planes contact the base.",
           f"FOV: fixture Xmax={front:g}; assumed pupil lower-bound X={plane:g}; rear clearance {plane-front:.1f}.",
-          'All fixture material remains behind this plane. Exact pupil and full FOV absent from STEP.',
-          'Verify full-frame images, cable plug clearance, PLA temperature/creep, loads and vibration.',
+          'Fixture only is behind the plane; tilted LiDAR protrudes forward and may enter camera FOV.',
+          'Verify full-frame images (including LiDAR), cable clearance, PLA temperature/creep and loads.',
           f"Solid PLA mass at 1.24 g/cm3: {r['pla_solid_mass_g_at_1_24']:.1f} g; actual print includes infill/support effects."]
         ax.text(.01,.98,'\n'.join(lines),va='top',family='monospace',fontsize=8.1,linespacing=1.18)
         pdf.savefig(f2);plt.close(f2)
@@ -138,7 +152,7 @@ def render(p,r,meshes):
             'Check pipe crushing, single-collar slip/rotation and rear cantilever strength with actual hardware.',
             '',
             'Assembly: bolt collar under base, insert pipe from below to Z<=0, then tighten to manufacturer limits.',
-            'Printed object is PrintableFixture only; collar and pipe are bought-part references.',
+            'Printed object includes integral tilted LiDAR wedge; collar and pipe are bought-part references.',
             'CAD checks: one solid; STL/STEP roundtrip; no sensor/envelope collisions; slot/tool access.',
         ]
         ax.text(.02,.96,'\n'.join(notes),va='top',family='monospace',fontsize=10,linespacing=1.5)
@@ -157,8 +171,8 @@ def main():
     render(p,r,meshes)
     # Distinct filenames identify the actual CAD inputs, avoiding ambiguous downloads.
     input_digest=hashlib.sha256((ROOT/'cad/parameters.json').read_bytes()+(ROOT/'cad/freecad_build.py').read_bytes()).hexdigest()[:10]
-    stem=f"fixture_mid360_z{p['lidar']['mount_rotation_z_deg']:g}_{input_digest}"
-    manifest={'model_input_id':input_digest,'lidar_mount_rotation_z_deg':p['lidar']['mount_rotation_z_deg'],'files':{}}
+    stem=f"fixture_mid360_z{p['lidar']['mount_rotation_z_deg']:g}_y{p['lidar']['mount_rotation_y_deg']:g}_{input_digest}"
+    manifest={'model_input_id':input_digest,'lidar_mount_rotation_z_deg':p['lidar']['mount_rotation_z_deg'],'lidar_mount_rotation_y_deg':p['lidar']['mount_rotation_y_deg'],'files':{}}
     for suffix in ['stl','step']:
         target=OUT/f'{stem}.{suffix}'
         shutil.copyfile(OUT/f'fixture.{suffix}',target)

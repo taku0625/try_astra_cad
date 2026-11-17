@@ -56,7 +56,13 @@
     "counterbore_diameter": 6.8,
     "counterbore_depth": 3.5,
     "mount_rotation_z_deg": 90.0,
-    "rotation_basis": "Relative to previous downward pose: +90 deg about assembly +Z, counterclockwise viewed from above"
+    "rotation_basis": "Apply existing +90 deg assembly Z yaw first, then -30 deg assembly Y pitch; translate mount center to (0,0,-20) mm",
+    "mount_rotation_y_deg": -30.0,
+    "mount_center_z": -20.0,
+    "wedge_length_x": 58.0,
+    "wedge_width_y": 66.0,
+    "screw_seat_thickness": 4.5,
+    "screw_length_under_head": 8.0
   },
   "printing": {
     "process": "FDM",
@@ -67,8 +73,8 @@
     "top_bottom_layers": 6,
     "infill_percent": 40,
     "infill_pattern": "gyroid",
-    "orientation": "Continuous base underside Z=0 on bed; print fixture only",
-    "supports": "Start with supports off; inspect small horizontal screw holes and 45-degree cable roof in slicer",
+    "orientation": "One integrated part; sloping LiDAR mount extends below Z=0. Select a side-face orientation and supports in the slicer; do not place the old Z=0 base face on the bed.",
+    "supports": "Supports required according to slicer orientation; inspect sloped mount, deep angled screw-access channels and camera cable roof.",
     "brim_mm": 5
   },
   "unresolved": [

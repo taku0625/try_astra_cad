@@ -1,7 +1,7 @@
 item,quantity,material_or_spec,notes
-printed fixture,1,PLA,145x100x62 continuous 8mm base including pipe mount; flat underside Z0; 4mm rear plate; cable opening extended upward 6mm with 45deg roof
+printed fixture,1,PLA,145x100x98.743; continuous 8mm base plus integral LiDAR Y-30deg wedge; select print orientation and supports in slicer
 camera rear screw,4,M1.6x8 user specified,25x25 pattern; dia1.8 holes through 4mm plate; 8mm excludes head; 4mm insertion without washer; confirm insertion limit and head size
-LiDAR screw,4,M3x8 conditional,mount XY=(+/-18 +/-24) after +90deg Z rotation; head clearance dia6.8 depth3.5; insertion3.5; confirm actual thread/depth
+LiDAR screw,4,M3x8 conditional,Z+90 then assembly Y-30deg; angled dia3.6 bores and dia6.8 head/tool channels; normal seat thickness4.5; insertion3.5; confirm actual thread/depth and head fit
 host fastener,4,M5 proposal,host-dependent length; host must clear LiDAR and rear cables
 slit collar,1,SCS2512CN2 requested,dimensions and axial mounting holes UNVERIFIED; envelope OD45 bore25 H12 is provisional
 carbon pipe,1,assumed OD25,actual OD and wall thickness unconfirmed; top at Z0 or below

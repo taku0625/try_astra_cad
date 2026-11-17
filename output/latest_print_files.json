@@ -1,14 +1,15 @@
 {
-  "model_input_id": "5806d96177",
+  "model_input_id": "a609f0ad48",
   "lidar_mount_rotation_z_deg": 90.0,
+  "lidar_mount_rotation_y_deg": -30.0,
   "files": {
     "stl": {
-      "name": "fixture_mid360_z90_5806d96177.stl",
-      "sha256": "7cc72cd12c15ae3adc49160f0ed6e23ee7fc9965f92b29af38820abca6a7d701"
+      "name": "fixture_mid360_z90_y-30_a609f0ad48.stl",
+      "sha256": "ea99b9ab2f1d55ec473c8d2f0d7aca2cc7aaebe30052dfa375b176f739b18cd4"
     },
     "step": {
-      "name": "fixture_mid360_z90_5806d96177.step",
-      "sha256": "59f97c0d31b761cda395271d148c4ca059c14493b35fee7fbb2baf3adf1052b3"
+      "name": "fixture_mid360_z90_y-30_a609f0ad48.step",
+      "sha256": "7195ab20d3481eaa33ac83b7736ce8f08cd118653a12e85473093cce5467916f"
     }
   }
 }
