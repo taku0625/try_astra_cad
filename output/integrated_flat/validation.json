@@ -1,0 +1,63 @@
+{
+  "historical_commit": "71f4adf468578672e7c65175cbfeb1a04e145f48",
+  "historical_step": "fixture_mid360_z90_5806d96177.step",
+  "historical_step_sha256": "59f97c0d31b761cda395271d148c4ca059c14493b35fee7fbb2baf3adf1052b3",
+  "removed_volume_mm3": 1536.0000001763692,
+  "difference_from_expected_cut_mm3": 0.0,
+  "dimensions_mm": [
+    145.0000001,
+    100.0,
+    62.0000001
+  ],
+  "printed_part_count": 1,
+  "stl_closed_manifold": true,
+  "stl_facets": 6004,
+  "stl_z_min_mm": 0.0,
+  "lidar_mount_rotation_y_deg": 0,
+  "lidar_mount_rotation_z_deg": 90,
+  "lidar_mount_center_mm": [
+    5.754752230302529e-15,
+    0.0,
+    7.105427357601002e-15
+  ],
+  "lidar_scan_direction": [
+    -2.220446049250313e-16,
+    0.0,
+    -1.0000000000000002
+  ],
+  "lidar_cable_direction": [
+    -4.440892098500626e-16,
+    -1.0000000000000002,
+    0.0
+  ],
+  "cable_opening_width_mm": 16.0,
+  "cable_opening_height_mm": 49.31370849898498,
+  "cable_opening_z_mm": [
+    7.500000000000027,
+    56.81370849898501
+  ],
+  "camera_mounts": [
+    {
+      "roll_deg": 0,
+      "connector_z_mm": 45.5,
+      "plug_overlap_mm3": 0.0,
+      "max_installation_overlap_mm3": 0.0,
+      "support_fraction": 1.0,
+      "rear_screw_seats_checked": 4
+    },
+    {
+      "roll_deg": 180,
+      "connector_z_mm": 15.5,
+      "plug_overlap_mm3": 0.0,
+      "max_installation_overlap_mm3": 0.0,
+      "support_fraction": 1.0,
+      "rear_screw_seats_checked": 4
+    }
+  ],
+  "sha256": {
+    "fixture_mid360_z90_y0.FCStd": "1686cf1e61095f27abc5c284a2028e5c30c48ab494a742664b48304d37390038",
+    "fixture_mid360_z90_y0.step": "d0f06d1616927dc568c0e4cef20c8fb2415c4e01c245bfe04ece9b0792500e16",
+    "fixture_mid360_z90_y0.stl": "3a45557f9b6cbfcc3113ff20fb638fad01a7686799db203602ffa42eddd94020",
+    "assembly.step": "da236c6300572f68b6ad29829f96039b1a08ff3cf161f1c942c19ccec7f174ce"
+  }
+}

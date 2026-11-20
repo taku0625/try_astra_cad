@@ -166,8 +166,14 @@ def main():
     global OUT
     parser=argparse.ArgumentParser()
     parser.add_argument('--render-only',action='store_true')
-    parser.add_argument('--variant',choices=['integrated','split'],default='integrated')
+    parser.add_argument('--variant',choices=['integrated','split','flat'],default='integrated')
     args=parser.parse_args()
+    if args.variant == 'flat':
+        if args.render_only:
+            parser.error('Use --variant flat to export the editable flat fixture as STL and STEP.')
+        subprocess.run([os.environ.get('FREECAD_PYTHON','/usr/bin/python3'),str(ROOT/'cad/export_flat_fixture.py')],
+                       cwd=ROOT,check=True)
+        return
     split=args.variant=='split'
     OUT=ROOT/'output'/('split_assembly' if split else '')
     if not args.render_only:
@@ -210,7 +216,8 @@ def main():
         for name in ['README.md','ASSEMBLY.md','requirements.txt']:z.write(ROOT/name,name)
         for folder in [ROOT/'cad',OUT]:
             for path in sorted(folder.rglob('*')):
-                if not split and (ROOT/'output/split_assembly') in path.parents:continue
+                if folder == OUT and not split and path.relative_to(OUT).parts[0] in ('split_assembly', 'integrated_flat'):
+                    continue
                 if (path.is_file() and '__pycache__' not in path.parts and not path.name.startswith('.')
                         and path.suffix not in ['.FCBak','.FCStd1']):
                     z.write(path,path.relative_to(ROOT))

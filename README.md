@@ -1,5 +1,17 @@
 # C2 / MID-360 治具 — 一体型と分割アセンブリ版
 
+## 一体型PLA治具 — LiDAR傾斜0°・カメラ上下両対応
+
+傾斜を付ける直前の `71f4adf` の一体型です。MID-360は平らな台座下面（Z=0 mm）に直付けし、走査軸は真下、ケーブル口は−Yを向きます。Z軸回りの取付角は+90°です。印刷するのは145 × 100 × 62 mmの治具1個で、台座下面をベッドに置きます。
+
+背面板のケーブル穴を幅16 mm、高さ49.31 mm（Z=7.5〜56.81 mm）に広げました。カメラはコネクタを上側・下側のどちらにしても、同じ4本の背面ねじで固定できます。実プラグの適合は実機での確認が必要です。
+
+[印刷用STL](output/integrated_flat/fixture_mid360_z90_y0.stl) ／ [治具STEP](output/integrated_flat/fixture_mid360_z90_y0.step) ／ [編集用FreeCAD](output/integrated_flat/fixture_mid360_z90_y0.FCStd) ／ [組立STEP](output/integrated_flat/assembly.step) ／ [検証結果](output/integrated_flat/validation.json)
+
+編集元はこの版のFreeCADファイルです。元の寸法表 `Parameters` の `CableUp` を6 mmから30 mmに変更しています。リポジトリ直下で `python cad/build.py --variant flat` を実行すると、このファイルから印刷用データを再出力し、元のSTEPとの形状差、両姿勢の組付け、ねじ座面、ケーブル経路を確認します。
+
+## 分割アセンブリ版 — LiDAR傾斜−30°
+
 **分割アセンブリ版を追加しました。** 共通台座と30°LiDARアダプターを別々に印刷し、M4ボルト4本で組み立てます。LiDARを先にアダプターへ取り付けてから台座へ固定します。
 
 [取付手順・分解図](ASSEMBLY.md) ／ [台座STL](output/split_assembly/base.stl) ／ [アダプターSTL](output/split_assembly/lidar_adapter.stl) ／ [組立FreeCAD](output/split_assembly/assembly.FCStd) ／ [組立STEP](output/split_assembly/assembly.step) ／ [アセンブリ版ZIP](fixture_assembly_cad.zip)
