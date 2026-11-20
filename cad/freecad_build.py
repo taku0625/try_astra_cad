@@ -39,9 +39,13 @@ lidar_hole_rotation=App.Rotation(V(0,0,1),lidar_normal)
 assert -60 < L['mount_rotation_y_deg'] < 0, 'Wedge supports negative assembly Y pitch between -60 and 0 degrees'
 assert L['screw_seat_thickness'] > 0
 assert L['mount_center_z']+abs(math.tan(math.radians(L['mount_rotation_y_deg'])))*L['wedge_length_x']/2 < -1, 'Keep tilted mount below base'
-camera_rotation=App.Rotation(V(1,0,0),C['roll_about_forward_deg']).multiply(App.Rotation(V(0,0,1),-90))
-camera_seat_z=camera_rotation.multVec(V(0,0,C['seating_plane_z_source'])).z
-cable_z=camera_rotation.multVec(V(0,0,C['rear_connector_z_source'])).z-camera_seat_z
+camera_roll=C['roll_about_forward_deg']%360
+assert camera_roll in (0,180), 'Camera assembly reference roll must be 0 or 180 degrees about +X'
+camera_forward_rotation=App.Rotation(V(0,0,1),-90)
+camera_rotations={roll:App.Rotation(V(1,0,0),roll).multiply(camera_forward_rotation) for roll in (0,180)}
+# Both seating faces are equally far below the camera datum in their mounted pose.
+camera_seat_z=-C['seating_plane_z_source']
+cable_z=-abs(C['rear_connector_z_source'])-camera_seat_z
 values = dict(BaseL=B['length_x'], BaseW=B['width_y'], BaseT=B['thickness'], BaseCX=B['center_x'], Radius=B['corner_radius'],
               CameraX=C['forward_offset'], CameraRear=C['rear_face_y_source'], BackT=R['thickness'], BackW=R['width'],
               BackH=R['height_above_base'], MountPitch=C['rear_mount_pitch'], CameraHoleD=R['camera_clearance_diameter'],
@@ -159,7 +163,7 @@ for i,(sy,sz) in enumerate([(-1,-1),(-1,1),(1,-1),(1,1)]):
                      'Parameters.CameraX+Parameters.CameraRear-Parameters.BackT-1 mm',
                      f'{sy}*Parameters.MountPitch/2',f'Parameters.BaseT-Parameters.CameraSeatZ+{sz}*Parameters.MountPitch/2',
                      App.Rotation(V(0,0,1),V(1,0,0))))
-# Cable opening: a vertically extended circle with a 45-degree roof for FDM.
+# The vertical slot spans both connector positions, with a 45-degree roof for FDM.
 # Extend to the rear edge: the low connector requires a 0.5 mm shallow base relief
 # so a nominal dia 16 plug can approach the opening horizontally from behind.
 cable=cyl('CableCircularClearance','Parameters.CableD/2',
@@ -211,17 +215,19 @@ if SPLIT:
     assert abs(fixture.Shape.optimalBoundingBox().ZMin)<1e-6 and abs(adapter.Shape.optimalBoundingBox().ZMax)<1e-6
     assert fixture.Shape.common(adapter.Shape).Volume<1e-5, 'Printed parts overlap'
 
-# User STEP geometry: camera rolled 180 degrees about +X, rear connector low.
+# Show the selected camera pose in the assembly and validate both poses below.
 # MID-360 yaw is followed by assembly Y pitch, about its mounting center.
 refs={}
+camera_source=Part.read(str(ROOT/'cad'/C['reference_file']))
 for name,key in [('Camera','camera'),('MID360','lidar')]:
     o=D.addObject('Part::Feature',name);o.Label='REFERENCE '+name
-    o.Shape=Part.read(str(ROOT/'cad'/P[key]['reference_file']))
     if key=='camera':
-        o.Placement=App.Placement(V(C['forward_offset'],0,B['thickness']-camera_seat_z),camera_rotation)
+        o.Shape=camera_source
+        o.Placement=App.Placement(V(C['forward_offset'],0,B['thickness']-camera_seat_z),camera_rotations[camera_roll])
         o.setExpression('Placement.Base.x','Parameters.CameraX')
         o.setExpression('Placement.Base.z','Parameters.BaseT-Parameters.CameraSeatZ')
     else:
+        o.Shape=Part.read(str(ROOT/'cad'/P[key]['reference_file']))
         r=lidar_mount_rotation.multiply(App.Rotation(V(0,0,1),180).multiply(App.Rotation(V(1,0,0),-90)))
         o.Placement=App.Placement(lidar_mount_origin+lidar_pitch.multVec(V(0,0,L['bottom_y_source'])),r)
     refs[key]=o
@@ -269,8 +275,6 @@ for sign in [-1,1]:
         assert shape.common(driver).Volume<1e-5
         for sensor in refs.values(): assert sensor.Shape.common(driver).Volume<1e-5
 assert all(v<1e-5 for v in interferences.values()),interferences
-assert refs['camera'].Shape.optimalBoundingBox().ZMin>refs['lidar'].Shape.optimalBoundingBox().ZMax
-assert abs(refs['camera'].Shape.optimalBoundingBox().YMin+refs['camera'].Shape.optimalBoundingBox().YMax)<1e-4
 camdir=refs['camera'].Placement.Rotation.multVec(V(0,1,0))
 liddir=refs['lidar'].Placement.Rotation.multVec(V(0,1,0))
 camport=refs['camera'].Placement.Rotation.multVec(V(0,-1,0))
@@ -278,26 +282,25 @@ lidport=refs['lidar'].Placement.Rotation.multVec(V(1,0,0))
 cam_source_z=refs['camera'].Placement.Rotation.multVec(V(0,0,1))
 assert (camdir-V(1,0,0)).Length<1e-8 and (liddir-lidar_pitch.multVec(V(0,0,-1))).Length<1e-8
 assert (camport-V(-1,0,0)).Length<1e-8 and (lidport-lidar_mount_rotation.multVec(V(-1,0,0))).Length<1e-8
-assert (cam_source_z-V(0,0,-1)).Length<1e-8, 'Camera roll must put source +Z downward'
-connector=refs['camera'].Placement.multVec(V(0,C['rear_face_y_source'],C['rear_connector_z_source']))
-assert abs(connector.y)<1e-8 and abs(connector.z-(B['thickness']+cable_z))<1e-8
-assert connector.z<refs['camera'].Placement.Base.z, 'Rear connector must be below optical axis'
+plug_low_z=B['thickness']+cable_z
+plug_high_z=plug_low_z+R['cable_upward_extension']
+plug_radius=R['cable_diameter']/2
+back_x=C['forward_offset']+C['rear_face_y_source']
 rear_start=B['center_x']-B['length_x']/2-1
-plug_probe=Part.makeCylinder(R['cable_diameter']/2-0.02,connector.x-rear_start+0.1,
-                             V(rear_start,connector.y,connector.z),V(1,0,0))
-# Probe the whole upward extension, including the formerly obstructing upper lip.
+probe_length=back_x-rear_start+0.1
+plug_probe=Part.makeCylinder(plug_radius-0.02,probe_length,V(rear_start,0,plug_low_z),V(1,0,0))
+# Check rear access over the full range of heights, including both connector positions.
 upper_probe=plug_probe.copy();upper_probe.translate(V(0,0,R['cable_upward_extension']))
-bridge_probe=Part.makeBox(connector.x-rear_start+0.1,R['cable_diameter']-0.04,R['cable_upward_extension'],
-                          V(rear_start,-R['cable_diameter']/2+0.02,connector.z))
+bridge_probe=Part.makeBox(probe_length,R['cable_diameter']-0.04,R['cable_upward_extension'],
+                          V(rear_start,-plug_radius+0.02,plug_low_z))
 plug_envelope=plug_probe.fuse(upper_probe).fuse(bridge_probe)
 assert shape.common(plug_envelope).Volume<1e-5, 'Extended cable approach blocked by base or rear plate'
 assert C['screw_diameter']<R['camera_clearance_diameter']<C['assumed_screw_head_diameter']
 screw_insertion=C['screw_length_under_head']-R['thickness']
 assert 0<screw_insertion<C['rear_hole_axis_first_obstruction_mm'], 'Nominal screw exceeds STEP axial opening'
 # Inspect the supplied camera back-face loops, rather than guessing a thread pattern.
-source=Part.read(str(ROOT/'cad'/C['reference_file']))
 rear_holes=[]
-for face in source.Faces:
+for face in camera_source.Faces:
     bb=face.optimalBoundingBox()
     if abs(bb.YMin-C['rear_face_y_source'])<1e-5 and abs(bb.YMax-C['rear_face_y_source'])<1e-5:
         for wire in face.Wires:
@@ -306,41 +309,58 @@ for face in source.Faces:
                 assert abs(wb.XLength-C['rear_hole_entry_diameter_model'])<1e-4
                 rear_holes.append((cx,cz))
 assert len(rear_holes)==4,rear_holes
-rear_global=[]
-for x,z in rear_holes:
-    pt=refs['camera'].Placement.multVec(V(x,C['rear_face_y_source'],z))
-    rear_global.append(list(pt))
-    assert abs(pt.x-(C['forward_offset']+C['rear_face_y_source']))<1e-8
-    # Clear through-hole to each camera back-face hole.
-    bore=Part.makeCylinder(R['camera_clearance_diameter']/2-0.02,R['thickness']+0.1,
-                          V(pt.x-R['thickness']-0.1,pt.y,pt.z),V(1,0,0))
-    assert shape.common(bore).Volume<1e-5
-    # Rear screwdriver/head access is kept clear of the two rear gussets.
-    approach=Part.makeCylinder(2.75,40,V(pt.x-R['thickness']-40,pt.y,pt.z),V(1,0,0))
-    assert shape.common(approach).Volume<1e-5
-    # A complete bearing annulus for an assumed dia 3.0 M1.6 head remains around
-    # each small through-hole, even beside the enlarged cable opening.
-    head_base=V(pt.x-R['thickness'],pt.y,pt.z)
-    bearing=Part.makeCylinder(C['assumed_screw_head_diameter']/2,0.2,head_base,V(1,0,0)).cut(
-        Part.makeCylinder(R['camera_clearance_diameter']/2,0.2,head_base,V(1,0,0)))
-    assert abs(shape.common(bearing).Volume-bearing.Volume)<1e-5, 'Incomplete screw head bearing surface'
-    shaft=Part.makeCylinder(C['screw_diameter']/2,C['screw_length_under_head'],head_base,V(1,0,0))
-    assert shape.common(shaft).Volume<1e-5, 'Nominal 8 mm screw shaft blocked by fixture'
-# Exact camera underside planes are supported on the base top, minus bolt openings.
-full_foot_area=0.;supported_area=0.
-for face in refs['camera'].Shape.Faces:
-    bb=face.optimalBoundingBox()
-    if isinstance(face.Surface,Part.Plane) and abs(bb.ZMin-B['thickness'])<1e-5 and abs(bb.ZMax-B['thickness'])<1e-5:
-        full_foot_area+=face.Area
-        supported_area+=face.common(shape).Area
-assert full_foot_area>500 and supported_area/full_foot_area>0.80,(full_foot_area,supported_area)
-# The rear connector crosses the back plate only through the cable opening at the
-# final height: install by translating rearward along X, with the connector leading.
-# Check real sensor geometry at representative approach positions; a cuboid would
-# incorrectly fill the connector clearance and the empty space behind the body.
-for dx in [0.25,1,3,6,10,20,40,80]:
-    moved=refs['camera'].Shape.copy();moved.translate(V(dx,0,0))
-    assert shape.common(moved).Volume<1e-5,('Camera rearward assembly blocked',dx)
+camera_fits={}
+lidar_top=refs['lidar'].Shape.optimalBoundingBox().ZMax
+for roll,rotation in camera_rotations.items():
+    placement=App.Placement(refs['camera'].Placement.Base,rotation)
+    camera_shape=camera_source.copy()
+    camera_shape.Placement=placement
+    camera_bounds=camera_shape.optimalBoundingBox()
+    assert camera_bounds.ZMin>lidar_top
+    assert abs(camera_bounds.YMin+camera_bounds.YMax)<1e-4
+    overlap=interferences['camera'] if roll==camera_roll else shape.common(camera_shape).Volume
+    assert overlap<1e-5, ('Camera interferes with fixture',roll,overlap)
+    connector=placement.multVec(V(0,C['rear_face_y_source'],C['rear_connector_z_source']))
+    assert abs(connector.y)<1e-8 and plug_low_z-1e-8<=connector.z<=plug_high_z+1e-8, (
+        'Cable opening does not reach the camera connector',roll,connector.z)
+
+    rear_global=[]
+    for x,z in rear_holes:
+        pt=placement.multVec(V(x,C['rear_face_y_source'],z))
+        rear_global.append(list(pt))
+        assert abs(pt.x-back_x)<1e-8
+        head_base=V(pt.x-R['thickness'],pt.y,pt.z)
+        bore=Part.makeCylinder(R['camera_clearance_diameter']/2-0.02,R['thickness']+0.1,
+                              head_base-V(0.1,0,0),V(1,0,0))
+        assert shape.common(bore).Volume<1e-5, ('Camera screw bore blocked',roll,pt)
+        approach=Part.makeCylinder(2.75,40,head_base-V(40,0,0),V(1,0,0))
+        assert shape.common(approach).Volume<1e-5, ('Camera driver access blocked',roll,pt)
+        # Preserve the full bearing annulus around each screw beside the slot.
+        bearing=Part.makeCylinder(C['assumed_screw_head_diameter']/2,0.2,head_base,V(1,0,0)).cut(
+            Part.makeCylinder(R['camera_clearance_diameter']/2,0.2,head_base,V(1,0,0)))
+        assert abs(shape.common(bearing).Volume-bearing.Volume)<1e-5, ('Incomplete screw head bearing',roll,pt)
+        shaft=Part.makeCylinder(C['screw_diameter']/2,C['screw_length_under_head'],head_base,V(1,0,0))
+        assert shape.common(shaft).Volume<1e-5, ('Camera screw shaft blocked',roll,pt)
+
+    # Measure underside contact on the real camera geometry in this orientation.
+    full_foot_area=0.
+    supported_area=0.
+    for face in camera_shape.Faces:
+        bb=face.optimalBoundingBox()
+        if isinstance(face.Surface,Part.Plane) and abs(bb.ZMin-B['thickness'])<1e-5 and abs(bb.ZMax-B['thickness'])<1e-5:
+            full_foot_area+=face.Area
+            supported_area+=face.common(shape).Area
+    assert full_foot_area>500 and supported_area/full_foot_area>0.80, (roll,full_foot_area,supported_area)
+    # Slide in along X with the connector leading through the rear plate.
+    for dx in [0.25,1,3,6,10,20,40,80]:
+        moved=camera_shape.copy();moved.translate(V(dx,0,0))
+        assert shape.common(moved).Volume<1e-5, ('Camera rearward assembly blocked',roll,dx)
+    camera_fits[roll]=dict(roll_about_forward_deg=roll,connector_center_global_mm=list(connector),
+                           back_hole_centers_global_mm=rear_global,interference_volume_mm3=overlap,
+                           foot_area_mm2=full_foot_area,supported_area_mm2=supported_area,
+                           support_fraction=supported_area/full_foot_area)
+reference_fit=camera_fits[camera_roll]
+opening_top_z=plug_high_z+R['cable_diameter']/math.sqrt(2)
 # Conservative full-forward-hemisphere check, retaining the previous pupil assumption.
 fov_plane=C['forward_offset']+C['lens_barrel_rear_x_source']
 margin=fov_plane-shape.BoundBox.XMax
@@ -501,22 +521,26 @@ report={'engine':'FreeCAD '+'.'.join(App.Version()[:3]),'status':P['status'],'pr
         'stl_facets':sum(item['stl_facets'] for item in part_reports.values()),
         'fixture_bounds_mm':dict(x=[shape.BoundBox.XMin,shape.BoundBox.XMax],y=[shape.BoundBox.YMin,shape.BoundBox.YMax],z=[shape.BoundBox.ZMin,shape.BoundBox.ZMax]),
         'camera_forward_shift_mm':C['forward_offset'],'interference_volume_mm3':interferences,
-        'camera_orientation':dict(roll_about_forward_deg=C['roll_about_forward_deg'],source_positive_z_global=list(cam_source_z),
-                                  seating_plane_z_source=C['seating_plane_z_source'],basis=C['orientation_basis']),
-        'camera_connector_center_global_mm':list(connector),
+        'camera_orientation':dict(roll_about_forward_deg=camera_roll,source_positive_z_global=list(cam_source_z),
+                                  seating_plane_z_source=camera_seat_z*cam_source_z.z,basis=C['orientation_basis']),
+        'camera_mount_orientations':list(camera_fits.values()),
+        'camera_connector_center_global_mm':reference_fit['connector_center_global_mm'],
         'cable_opening_height_above_base_mm':cable_z,
-        'cable_base_relief_depth_mm':max(0,R['cable_diameter']/2-cable_z),
+        'cable_base_relief_depth_mm':max(0,plug_radius-cable_z),
         'cable_upward_extension_mm':R['cable_upward_extension'],
-        'cable_opening_top_z_mm':connector.z+R['cable_upward_extension']+R['cable_diameter']/math.sqrt(2),
-        'cable_approach':'PASS - nominal dia 16 profile swept upward 6 mm, clear from rear edge through plate; actual plug not supplied',
+        'cable_opening_bottom_z_mm':plug_low_z-plug_radius,
+        'cable_opening_top_z_mm':opening_top_z,
+        'cable_opening_height_mm':opening_top_z-plug_low_z+plug_radius,
+        'cable_approach':f"PASS - nominal dia {R['cable_diameter']:g} plug path clear at both camera rolls and between",
         'camera_fastener':dict(diameter_mm=C['screw_diameter'],spec_source=C['screw_spec_source'],hole_diameter_mm=R['camera_clearance_diameter'],
                                length_under_head_mm=C['screw_length_under_head'],through_length_mm=R['thickness'],
                                insertion_without_washer_mm=screw_insertion,assumed_head_diameter_mm=C['assumed_screw_head_diameter'],
                                head_bearing='PASS - full assumed dia 3.0 head annulus at all four holes',
                                actual_insertion_limit_verified=False),
-        'camera_assembly_approach':'PASS - exact sensor at 8 approach offsets along X; final rear contact and cable clearance',
-        'camera_back_hole_centers_global':rear_global,'camera_foot_area_mm2':full_foot_area,
-        'camera_supported_area_mm2':supported_area,'camera_support_fraction':supported_area/full_foot_area,
+        'camera_assembly_approach':'PASS - exact sensor at 8 approach offsets along X at each camera roll',
+        'camera_back_hole_centers_global':reference_fit['back_hole_centers_global_mm'],
+        'camera_foot_area_mm2':reference_fit['foot_area_mm2'],'camera_supported_area_mm2':reference_fit['supported_area_mm2'],
+        'camera_support_fraction':reference_fit['support_fraction'],
         'lidar_mount_rotation_z_deg':L['mount_rotation_z_deg'],
         'lidar_mount_rotation_y_deg':L['mount_rotation_y_deg'],
         'lidar_mount_center_mm':list(lidar_mount_origin),

@@ -55,8 +55,10 @@ def render(p,r,meshes):
     ax.add_patch(Rectangle((back-k['thickness'],t),k['thickness'],k['height_above_base'],color=COLORS['fixture'],alpha=.8))
     ax.add_patch(Rectangle((cx-16.4,t),38.1,45,facecolor=COLORS['camera'],edgecolor='#8c672c',alpha=.55))
     ax.add_patch(Rectangle((cx+22.8,t+10.5),6.7,24,facecolor=COLORS['camera']))
-    ax.add_patch(Rectangle((cx-28.3,r['camera_connector_center_global_mm'][2]-3.75),11.9,7.5,facecolor=COLORS['camera']))
-    ax.annotate('Rear connector LOW',xy=(cx-24,r['camera_connector_center_global_mm'][2]),
+    connector_z=r['camera_connector_center_global_mm'][2]
+    connector_heights=sorted(fit['connector_center_global_mm'][2] for fit in r['camera_mount_orientations'])
+    ax.add_patch(Rectangle((cx-28.3,connector_z-3.75),11.9,7.5,facecolor=COLORS['camera']))
+    ax.annotate('Rear connector (shown)',xy=(cx-24,connector_z),
                 xytext=(-58,68),fontsize=8,color='#8c672c',arrowprops=dict(arrowstyle='->',color='#8c672c'))
     l=p['lidar']
     import math
@@ -97,7 +99,7 @@ def render(p,r,meshes):
           f"Rear plate: {k['thickness']:g} thick x {k['width']:g} wide x {k['height_above_base']:g} above base; Z top={t+k['height_above_base']:g}.",
           f"Rear plate camera contact face X={back:g}; rear face X={back-k['thickness']:g}.",
           'Camera datum X=22 (8 mm rearward from previous X=30), Y=0; bottom Z=8.',
-          'Camera roll: 180 deg about forward +X; source +Z points DOWN; rear connector below lens.',
+          f"Camera fits at 0 or 180 deg about +X. This assembly shows {r['camera_orientation']['roll_about_forward_deg']:g} deg.",
           f"MID-360 mount center (0,0,{p['lidar']['mount_center_z']:g}); assembly Y pitch {p['lidar']['mount_rotation_y_deg']:g} deg.",
           f"Apply Z +{p['lidar']['mount_rotation_z_deg']:g} deg first, then Y {p['lidar']['mount_rotation_y_deg']:g} deg; LiDAR axis (+0.5,0,-0.866).",'',
           'CAMERA REAR ATTACHMENT:',
@@ -105,8 +107,8 @@ def render(p,r,meshes):
           ' Source STEP rear face Y=-16.4: four entry loops diameter 2.57 at X/Z=+/-12.5.',
           ' M1.6 confirmed by user; STEP entry diameter is not a thread specification. Check insertion limit.',
           f" M{c['screw_diameter']:g}x{c['screw_length_under_head']:g} (head excluded) through {k['thickness']:g} plate: {r['camera_fastener']['insertion_without_washer_mm']:g} insertion, no washer.",
-          f" Cable opening: dia {k['cable_diameter']:g} at Y=0, Z={r['camera_connector_center_global_mm'][2]:g}, extended UP {k['cable_upward_extension']:g} with 45-degree roof.",
-          f" Cable opening top Z={r['cable_opening_top_z_mm']:.2f}; nominal plug envelope checked, actual plug not supplied.",
+          f" Cable opening is {k['cable_diameter']:g} mm wide at Y=0, from Z={r['cable_opening_bottom_z_mm']:g} to {r['cable_opening_top_z_mm']:.2f}, with a 45-degree roof.",
+          f" Nominal dia {k['cable_diameter']:g} plug clearance verified in CAD at Z={connector_heights[0]:g} and {connector_heights[1]:g}.",
           f" Base relief below cable: {r['cable_base_relief_depth_mm']:g} deep, extends to rear edge for plug approach.",
           ' Two rear-only gussets: 5 mm wide, 16 mm deep, 26 mm high, with 1 mm root overlaps.','',
           'BASE HOLES:']
@@ -121,7 +123,7 @@ def render(p,r,meshes):
           ' Temperature/speed follow filament and printer profiles. Deburr holes and contact faces.','',
           'ASSEMBLY:',
           '1. Attach tilted LiDAR to wedge using 4 angled M3x8 screws, insertion 3.5 mm: verify limit.',
-          '2. With rear connector LOW, rest camera on base; slide rearward into cable opening.',
+          '2. Rest camera on base with its connector high or low and slide rearward into the opening.',
           '3. Fasten 4 rear camera screws from -X. Verify thread, insertion and tightening torque.',
           '4. Connect cables. Attach host via 4 M5 clearance holes; keep LiDAR/cable volumes clear.','',
           f"CAMERA SUPPORT: {r['camera_supported_area_mm2']:.1f} of {r['camera_foot_area_mm2']:.1f} mm2 bottom planes contact the base.",

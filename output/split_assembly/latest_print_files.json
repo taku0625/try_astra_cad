@@ -1,25 +1,25 @@
 {
-  "model_input_id": "b4769a0262",
+  "model_input_id": "8d340346b8",
   "variant": "split",
   "printed_part_count": 2,
   "lidar_mount_rotation_z_deg": 90.0,
   "lidar_mount_rotation_y_deg": -30.0,
   "files": {
     "base_stl": {
-      "name": "base_y-30_b4769a0262.stl",
-      "sha256": "ec4c352ad77e4f2f54c914866c1345a69aec4b55e765ed639b5199635bb14a7e"
+      "name": "base_y-30_8d340346b8.stl",
+      "sha256": "7cd370d9bb8bd290ea94eecabf9a2204267fa5ac66c39857e7d184c61f5ba6f8"
     },
     "base_step": {
-      "name": "base_y-30_b4769a0262.step",
-      "sha256": "87783f1c207600b1756224da7676989d8ca845eea9430b5e9e5bddbd69fe9058"
+      "name": "base_y-30_8d340346b8.step",
+      "sha256": "403e4bcf568f5cc6c98328b9128bf347d950b78505196a0db07f3ec527ca8cb4"
     },
     "lidar_adapter_stl": {
-      "name": "lidar_adapter_y-30_b4769a0262.stl",
+      "name": "lidar_adapter_y-30_8d340346b8.stl",
       "sha256": "1a93f61d1fe6449b1fc7bfb4a3954057af60e6570d1ecf00085d70ba33e12c3f"
     },
     "lidar_adapter_step": {
-      "name": "lidar_adapter_y-30_b4769a0262.step",
-      "sha256": "aa84efad91e95b36ccd9ea4e0ab472285b41a2828de7ff1c75a47aa8f1c94610"
+      "name": "lidar_adapter_y-30_8d340346b8.step",
+      "sha256": "8487ce3ee52f4212d363739907c271e81e3c1e1cba4e1981b697658cd80aee55"
     }
   },
   "stl_orientation": "Both STLs sit on Z=0; adapter is rotated 180 degrees about X relative to assembly STEP."

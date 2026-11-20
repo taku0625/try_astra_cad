@@ -1,7 +1,7 @@
 {
   "source_step": "lidar_adapter.step",
-  "source_step_sha256": "aa84efad91e95b36ccd9ea4e0ab472285b41a2828de7ff1c75a47aa8f1c94610",
-  "source_fcstd_sha256": "e9009ba8fde2000ba10c0c469451c9f62ae5f3066ac90421dab042ae11f79fbb",
+  "source_step_sha256": "8487ce3ee52f4212d363739907c271e81e3c1e1cba4e1981b697658cd80aee55",
+  "source_fcstd_sha256": "a443f23f56e9211bd142803f9dcdaac1b385943efede3a09468f58f15b45338f",
   "result": "PASS - four separate through bores and clear M3 head/driver paths in exported STEP",
   "hole_count": 4,
   "top_entry_count": 2,
